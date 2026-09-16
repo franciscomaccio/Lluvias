@@ -7,6 +7,9 @@
   const WEATHER_LON = -64.35903;
   const WEATHER_TZ = 'America/Argentina/Cordoba';
 
+  const YEAR_COLORS = ['#2f6f9e', '#c2703d', '#4f8f5b', '#8a4f9e', '#a4453a', '#3d8f95'];
+  const MONTH_STARTS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
+
   const QUOTES = [
     'La lluvia también cuenta historias.',
     'Cada lectura es un capítulo del año.',
@@ -44,6 +47,22 @@
   }
   function daysInMonth(year, month) {
     return new Date(year, month + 1, 0).getDate();
+  }
+  function dayOfYear(dateStr) {
+    const d = parseLocal(dateStr);
+    const jan1 = new Date(d.getFullYear(), 0, 1);
+    return Math.round((d - jan1) / 86400000) + 1;
+  }
+  function isLeap(year) {
+    return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  }
+  function niceStep(raw) {
+    if (raw <= 0) return 1;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(raw)));
+    const residual = raw / magnitude;
+    let n;
+    if (residual <= 1) n = 1; else if (residual <= 2) n = 2; else if (residual <= 5) n = 5; else n = 10;
+    return n * magnitude;
   }
 
   // --- Weather icons (WMO codes) ---
@@ -136,6 +155,10 @@
     historyBody: document.getElementById('history-body'),
     emptyHistory: document.getElementById('empty-history'),
 
+    totalsBody: document.getElementById('totals-body'),
+    cumulativeLegend: document.getElementById('cumulative-legend'),
+    cumulativeChartWrap: document.getElementById('cumulative-chart-wrap'),
+
     quoteText: document.getElementById('quote-text'),
     summaryDays: document.getElementById('summary-days'),
     summaryMax: document.getElementById('summary-max'),
@@ -203,6 +226,101 @@
     renderHistoryYearOptions();
     renderHistory();
     renderSummary();
+    renderYearlyTable();
+    renderCumulativeChart();
+  }
+
+  function computeYearlyStats() {
+    const byYear = {};
+    entries.forEach(e => {
+      const y = e.date.slice(0, 4);
+      if (!byYear[y]) byYear[y] = { year: y, total: 0, rainyDays: 0, maxMm: 0, maxDate: null };
+      const s = byYear[y];
+      s.total += e.mm;
+      if (e.mm > 0) s.rainyDays++;
+      if (e.mm > s.maxMm) { s.maxMm = e.mm; s.maxDate = e.date; }
+    });
+    return Object.values(byYear).sort((a, b) => b.year.localeCompare(a.year));
+  }
+
+  function renderYearlyTable() {
+    if (!loaded) { el.totalsBody.innerHTML = '<tr><td colspan="4">Cargando…</td></tr>'; return; }
+    const stats = computeYearlyStats();
+    if (stats.length === 0) { el.totalsBody.innerHTML = '<tr><td colspan="4">Sin datos.</td></tr>'; return; }
+    el.totalsBody.innerHTML = stats.map(s =>
+      '<tr><td>' + s.year + '</td><td class="num">' + fmtMm(s.total) + '</td><td class="num">' + s.rainyDays + '</td><td class="num">' +
+      (s.maxDate ? fmtMm(s.maxMm) + ' (' + formatDM(s.maxDate) + ')' : '—') + '</td></tr>'
+    ).join('');
+  }
+
+  function renderCumulativeChart() {
+    if (!loaded) {
+      el.cumulativeChartWrap.innerHTML = '<div class="chart-empty">Cargando…</div>';
+      el.cumulativeLegend.innerHTML = '';
+      return;
+    }
+    const years = Array.from(new Set(entries.map(e => e.date.slice(0, 4)))).sort();
+    if (years.length === 0) {
+      el.cumulativeChartWrap.innerHTML = '<div class="chart-empty">Sin datos todavía.</div>';
+      el.cumulativeLegend.innerHTML = '';
+      return;
+    }
+    const curYear = new Date().getFullYear();
+    const curDoy = dayOfYear(todayStr());
+
+    const series = years.map((y, i) => {
+      const yearEntries = entries.filter(e => e.date.startsWith(y + '-')).sort((a, b) => a.date < b.date ? -1 : 1);
+      const points = [{ doy: 1, cum: 0 }];
+      let cum = 0;
+      yearEntries.forEach(e => {
+        const doy = dayOfYear(e.date);
+        points.push({ doy, cum });
+        cum += e.mm;
+        points.push({ doy, cum });
+      });
+      const endDoy = Number(y) === curYear ? curDoy : (isLeap(Number(y)) ? 366 : 365);
+      points.push({ doy: endDoy, cum });
+      return { year: y, color: YEAR_COLORS[i % YEAR_COLORS.length], points, total: cum };
+    });
+
+    const rawMax = Math.max(...series.map(s => s.total), 1);
+    const step = niceStep(rawMax / 5);
+    const maxVal = Math.ceil(rawMax / step) * step;
+    const gridCount = Math.round(maxVal / step);
+    const W = 640, H = 260, padL = 42, padR = 10, padT = 14, padB = 26;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+    const xForDoy = doy => padL + (doy - 1) / 365 * plotW;
+    const yForVal = v => padT + plotH - (v / maxVal) * plotH;
+
+    let grid = '';
+    for (let i = 0; i <= gridCount; i++) {
+      const v = step * i;
+      const y = yForVal(v);
+      grid += '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y.toFixed(1) + '" stroke="var(--line)" stroke-width="1"></line>';
+      grid += '<text x="' + (padL - 8) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="end" font-size="9" font-family="var(--font-mono)" fill="var(--ink-soft)">' + Math.round(v) + '</text>';
+    }
+    let xLabels = '';
+    MONTH_STARTS.filter((_, i) => i % 2 === 0).forEach(doy => {
+      const x = xForDoy(doy);
+      const label = '1/' + MONTHS[MONTH_STARTS.indexOf(doy)];
+      xLabels += '<text x="' + x.toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="9" font-family="var(--font-body)" fill="var(--ink-soft)">' + label + '</text>';
+    });
+
+    let lines = '';
+    series.forEach(s => {
+      const d = s.points.map((p, i) => (i === 0 ? 'M' : 'L') + xForDoy(p.doy).toFixed(1) + ' ' + yForVal(p.cum).toFixed(1)).join(' ');
+      lines += '<path d="' + d + '" fill="none" stroke="' + s.color + '" stroke-width="2" stroke-linejoin="round"></path>';
+      const last = s.points[s.points.length - 1];
+      lines += '<circle cx="' + xForDoy(last.doy).toFixed(1) + '" cy="' + yForVal(last.cum).toFixed(1) + '" r="3" fill="' + s.color + '"></circle>';
+    });
+
+    el.cumulativeChartWrap.innerHTML = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Acumulado de lluvia por año">' +
+      grid + '<line x1="' + padL + '" y1="' + (padT + plotH) + '" x2="' + (W - padR) + '" y2="' + (padT + plotH) + '" stroke="var(--line)" stroke-width="1"></line>' +
+      lines + xLabels + '</svg>';
+
+    el.cumulativeLegend.innerHTML = series.map(s =>
+      '<span><i style="background:' + s.color + '"></i>' + s.year + ' · ' + fmtMm(s.total) + ' mm</span>'
+    ).join('');
   }
 
   function renderStats() {

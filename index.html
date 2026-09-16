@@ -212,6 +212,31 @@
     </div>
   </div>
 
+  <div class="grid-yearly">
+    <section class="card totals-card">
+      <h2>Totales por año</h2>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Año</th>
+            <th class="num">Total (mm)</th>
+            <th class="num">Días con lluvia</th>
+            <th class="num">Máxima en un día</th>
+          </tr>
+        </thead>
+        <tbody id="totals-body"></tbody>
+      </table>
+    </section>
+
+    <section class="card cumulative-card">
+      <div class="chart-head">
+        <h2>Acumulado anual</h2>
+        <div class="cumulative-legend" id="cumulative-legend"></div>
+      </div>
+      <div id="cumulative-chart-wrap"></div>
+    </section>
+  </div>
+
   <footer class="note">Datos almacenados en Supabase. Clima en tiempo real vía Open-Meteo. El historial es público; cargar o editar requiere iniciar sesión.</footer>
 </div>
 
