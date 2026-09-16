@@ -16,36 +16,7 @@
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #10181f;
-    --surface: #17222b;
-    --surface-2: #1d2932;
-    --ink: #e7edf1;
-    --ink-soft: #93a5b2;
-    --line: #283640;
-    --accent: #74b3de;
-    --accent-2: #294356;
-    --accent-deep: #a3d4f0;
-    --danger: #db8579;
-    --danger-soft: #3a2523;
-    --success: #6fce9b;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #10181f;
-  --surface: #17222b;
-  --surface-2: #1d2932;
-  --ink: #e7edf1;
-  --ink-soft: #93a5b2;
-  --line: #283640;
-  --accent: #74b3de;
-  --accent-2: #294356;
-  --accent-deep: #a3d4f0;
-  --danger: #db8579;
-  --danger-soft: #3a2523;
-  --success: #6fce9b;
-}
+/* Fondo claro fijo: este diseño no sigue el tema oscuro del sistema. */
 
 * { box-sizing: border-box; }
 html, body {
@@ -314,6 +285,13 @@ svg { display: block; }
 }
 @media (max-width: 900px) {
   .grid-mid, .grid-bottom { grid-template-columns: 1fr; }
+}
+
+.chart-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 /* Period toggle */

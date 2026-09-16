@@ -122,6 +122,10 @@
 
     periodToggle: document.getElementById('period-toggle'),
     recentChartWrap: document.getElementById('recent-chart-wrap'),
+    recentYearNav: document.getElementById('recent-year-nav'),
+    recentYearPrev: document.getElementById('recent-year-prev'),
+    recentYearNext: document.getElementById('recent-year-next'),
+    recentYearLabel: document.getElementById('recent-year-label'),
 
     calTitle: document.getElementById('calendar-title'),
     calPrev: document.getElementById('cal-prev'),
@@ -143,6 +147,7 @@
   let loaded = false;
   let editingDate = null;
   let recentPeriod = '7';
+  let chartYear = new Date().getFullYear();
   let calYear = new Date().getFullYear();
   let calMonth = new Date().getMonth();
   let historyYearFilter = 'todos';
@@ -192,6 +197,7 @@
   // ---------- Rendering ----------
   function render() {
     renderStats();
+    renderRecentYearNav();
     renderRecentChart();
     renderCalendar();
     renderHistoryYearOptions();
@@ -290,7 +296,7 @@
   }
 
   function renderYearChart() {
-    const year = new Date().getFullYear();
+    const year = chartYear;
     const yearEntries = entries.filter(e => e.date.startsWith(String(year) + '-'));
     if (yearEntries.length === 0) {
       el.recentChartWrap.innerHTML = '<div class="chart-empty">Sin registros para ' + year + '.</div>';
@@ -304,7 +310,7 @@
     const plotH = H - padT - padB;
     const gap = 8;
     const barW = (plotW - gap * 11) / 12;
-    const curMonth = new Date().getMonth();
+    const curMonth = (year === new Date().getFullYear()) ? new Date().getMonth() : -1;
 
     let bars = '', labels = '';
     for (let i = 0; i < 12; i++) {
@@ -328,7 +334,32 @@
     if (!btn) return;
     recentPeriod = btn.getAttribute('data-period');
     [...el.periodToggle.querySelectorAll('button')].forEach(b => b.classList.toggle('active', b === btn));
+    el.recentYearNav.hidden = recentPeriod !== 'year';
+    renderRecentYearNav();
     renderRecentChart();
+  });
+
+  function dataYears() {
+    const ys = new Set(entries.map(e => Number(e.date.slice(0, 4))));
+    ys.add(new Date().getFullYear());
+    return Array.from(ys);
+  }
+  function renderRecentYearNav() {
+    const years = dataYears();
+    const minYear = Math.min(...years);
+    el.recentYearLabel.textContent = chartYear;
+    el.recentYearPrev.disabled = chartYear <= minYear;
+    el.recentYearNext.disabled = chartYear >= new Date().getFullYear();
+  }
+  el.recentYearPrev.addEventListener('click', () => {
+    chartYear--;
+    renderRecentYearNav();
+    renderYearChart();
+  });
+  el.recentYearNext.addEventListener('click', () => {
+    chartYear++;
+    renderRecentYearNav();
+    renderYearChart();
   });
 
   function renderCalendar() {
