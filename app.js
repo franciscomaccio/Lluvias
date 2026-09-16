@@ -159,7 +159,6 @@
     historyBody: document.getElementById('history-body'),
     emptyHistory: document.getElementById('empty-history'),
 
-    damsBody: document.getElementById('dams-body'),
     damsUpdated: document.getElementById('dams-updated'),
     damTanksGrid: document.getElementById('dam-tanks-grid'),
 
@@ -795,7 +794,6 @@
       .order('date', { ascending: false })
       .limit(64);
     if (error || !data || data.length === 0) {
-      el.damsBody.innerHTML = '<tr><td colspan="4">Sin datos todavía.</td></tr>';
       el.damTanksGrid.innerHTML = '';
       el.damsUpdated.textContent = '';
       return;
@@ -807,12 +805,6 @@
       return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
     });
     el.damsUpdated.textContent = 'Actualizado: ' + formatShort(latestDate);
-    el.damsBody.innerHTML = rows.map(r => {
-      const diffClass = r.diff >= 0 ? 'diff-up' : 'diff-down';
-      const sign = r.diff > 0 ? '+' : '';
-      return '<tr><td>' + escapeHtml(r.dam_name) + '</td><td class="num">' + fmtNum2(r.spillway_level) +
-        '</td><td class="num">' + fmtNum2(r.current_level) + '</td><td class="num ' + diffClass + '">' + sign + fmtNum2(r.diff) + '</td></tr>';
-    }).join('');
     renderDamTanks(rows);
   }
   client

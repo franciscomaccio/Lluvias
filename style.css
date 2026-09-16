@@ -472,7 +472,6 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
 /* Dam levels */
 .dams-card { margin-bottom: 16px; }
 .dams-updated { font-size: 0.78rem; color: var(--ink-soft); }
-.dams-card .history-scroll { max-height: none; }
 .data-table td.num.diff-up { color: var(--success); }
 .data-table td.num.diff-down { color: var(--danger); }
 .dams-source {
@@ -482,19 +481,13 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
 }
 .dams-source a { color: var(--accent); }
 
-.dams-body-grid {
-  display: grid;
-  grid-template-columns: 1fr 1.4fr;
-  gap: 24px;
-  align-items: start;
-}
-@media (max-width: 900px) {
-  .dams-body-grid { grid-template-columns: 1fr; }
-}
 .dam-tanks-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(64px, 1fr));
-  gap: 10px 12px;
+  grid-template-columns: repeat(8, minmax(64px, 1fr));
+  gap: 10px 14px;
+}
+@media (max-width: 900px) {
+  .dam-tanks-grid { grid-template-columns: repeat(4, minmax(64px, 1fr)); }
 }
 @media (max-width: 480px) {
   .dam-tanks-grid { grid-template-columns: repeat(3, minmax(60px, 1fr)); }
