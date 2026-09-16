@@ -12,116 +12,224 @@
 </head>
 <body>
 <div class="page">
-  <header class="top">
-    <div class="eyebrow">
-      <svg viewBox="0 0 24 24"><path d="M12 2c-3.5 5-6 8.7-6 11.5A6 6 0 0 0 18 13.5C18 10.7 15.5 7 12 2z"/></svg>
-      Registro personal
+
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" class="brand-drop"><path d="M12 2c-3.5 5-6 8.7-6 11.5A6 6 0 0 0 18 13.5C18 10.7 15.5 7 12 2z"/></svg>
+      <span>Pluviómetro</span>
     </div>
-    <h1>Pluviómetro</h1>
-    <p>Milímetros de lluvia caídos en casa, día por día. Cargá cada lectura después de la lluvia y llevá el historial mensual y anual.</p>
+    <div class="topbar-right">
+      <div class="topbar-place">
+        <div class="place-name">
+          <svg viewBox="0 0 24 24" class="pin-icon"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="9" r="2.4" fill="currentColor"/></svg>
+          Malagueño, Córdoba, AR
+        </div>
+        <div class="place-date" id="topbar-date">&nbsp;</div>
+      </div>
+      <div class="topbar-weather-glyph" id="topbar-weather-glyph" title=""></div>
+      <div class="avatar-wrap">
+        <button type="button" class="avatar-btn" id="avatar-btn" aria-label="Cuenta">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="3.6"/><path d="M4.8 20c0-4 3.2-7.2 7.2-7.2s7.2 3.2 7.2 7.2"/></svg>
+        </button>
+        <div class="popover" id="avatar-popover" hidden>
+          <div id="popover-login">
+            <h3>Iniciar sesión</h3>
+            <p class="popover-hint">El historial es público. Para cargar o editar registros necesitás iniciar sesión.</p>
+            <form id="login-form">
+              <div class="field">
+                <label for="l-email">Email</label>
+                <input type="email" id="l-email" required autocomplete="username">
+              </div>
+              <div class="field">
+                <label for="l-password">Contraseña</label>
+                <input type="password" id="l-password" required autocomplete="current-password">
+              </div>
+              <div id="login-error" class="banner"></div>
+              <button type="submit" class="submit-btn">Iniciar sesión</button>
+            </form>
+          </div>
+          <div id="popover-account" hidden>
+            <h3>Tu cuenta</h3>
+            <p class="popover-account-email" id="popover-email"></p>
+            <button type="button" class="submit-btn ghost-btn" id="logout-btn">Cerrar sesión</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </header>
 
-  <div id="banner" class="banner"></div>
+  <section class="greeting">
+    <div>
+      <h1>¡Hola!</h1>
+      <p>Acá podés ver el clima actual y el historial de lluvias que vas registrando.</p>
+    </div>
+    <button type="button" class="submit-btn primary-cta" id="open-register-btn">
+      <svg viewBox="0 0 24 24" class="plus-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Registrar lluvia de hoy
+    </button>
+  </section>
 
-  <section class="stats">
+  <div id="banner" class="banner page-banner"></div>
+
+  <section class="stats-grid">
+    <div class="stat weather-stat">
+      <div class="label">Clima actual</div>
+      <div class="weather-main">
+        <div class="weather-icon" id="weather-icon"></div>
+        <div>
+          <div class="weather-temp" id="weather-temp">—</div>
+          <div class="weather-cond" id="weather-cond">Cargando…</div>
+        </div>
+      </div>
+      <div class="weather-sub">
+        <div><svg viewBox="0 0 24 24" class="mini-icon"><path d="M12 2c-3.5 5-6 8.7-6 11.5A6 6 0 0 0 18 13.5C18 10.7 15.5 7 12 2z"/></svg>Humedad <b id="weather-hum">—</b></div>
+        <div><svg viewBox="0 0 24 24" class="mini-icon" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 8h9.2a2.4 2.4 0 1 0-2.4-2.4"/><path d="M3 12.2h12.6a2.4 2.4 0 1 1-2.4 2.4"/><path d="M3 16.4h6.8a2 2 0 1 1-2 2"/></svg>Viento <b id="weather-wind">—</b></div>
+        <div><svg viewBox="0 0 24 24" class="mini-icon" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="13" r="7.5"/><line x1="12" y1="13" x2="15" y2="9.2" stroke-linecap="round"/><line x1="12" y1="3.5" x2="12" y2="1.8" stroke-linecap="round"/></svg>Presión <b id="weather-pressure">—</b></div>
+      </div>
+    </div>
+
     <div class="stat">
-      <div class="label">Este mes</div>
-      <div class="value" id="stat-month">— <span class="unit">mm</span></div>
+      <div class="label">Lluvia hoy</div>
+      <div class="stat-icon-row">
+        <svg viewBox="0 0 24 24" class="stat-icon" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M17.5 19a4.5 4.5 0 0 0-.4-9A5.5 5.5 0 0 0 6.6 8 4.5 4.5 0 0 0 6.5 17H17z"/></svg>
+        <div class="value" id="stat-today">— <span class="unit">mm</span></div>
+      </div>
+      <div class="sub" id="stat-today-sub">&nbsp;</div>
+    </div>
+
+    <div class="stat">
+      <div class="label">Lluvia este mes</div>
+      <div class="stat-icon-row">
+        <svg viewBox="0 0 24 24" class="stat-icon" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.2" y="5" width="17.6" height="15.5" rx="2"/><line x1="3.2" y1="9.3" x2="20.8" y2="9.3"/><line x1="8" y1="3" x2="8" y2="7" stroke-linecap="round"/><line x1="16" y1="3" x2="16" y2="7" stroke-linecap="round"/></svg>
+        <div class="value" id="stat-month">— <span class="unit">mm</span></div>
+      </div>
       <div class="sub" id="stat-month-sub">&nbsp;</div>
     </div>
+
     <div class="stat">
-      <div class="label">Este año</div>
-      <div class="value" id="stat-year">— <span class="unit">mm</span></div>
+      <div class="label">Lluvia este año</div>
+      <div class="stat-icon-row">
+        <svg viewBox="0 0 24 24" class="stat-icon" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="5.5"/><line x1="19" y1="20" x2="19" y2="15"/></svg>
+        <div class="value" id="stat-year">— <span class="unit">mm</span></div>
+      </div>
       <div class="sub" id="stat-year-sub">&nbsp;</div>
-    </div>
-    <div class="stat">
-      <div class="label">Último registro</div>
-      <div class="value" id="stat-last">—</div>
-      <div class="sub" id="stat-last-sub">&nbsp;</div>
     </div>
   </section>
 
-  <div class="grid">
-    <section class="card" id="write-card">
-      <div id="auth-status" class="auth-status" style="display:none;">
-        <span id="auth-email"></span>
-        <button type="button" id="logout-btn" class="icon-btn">Cerrar sesión</button>
-      </div>
-
-      <div id="login-view">
-        <h2>Iniciar sesión</h2>
-        <p class="chart-sub">El historial es público. Para cargar o editar registros necesitás iniciar sesión.</p>
-        <form id="login-form">
-          <div class="field">
-            <label for="l-email">Email</label>
-            <input type="email" id="l-email" required autocomplete="username">
-          </div>
-          <div class="field">
-            <label for="l-password">Contraseña</label>
-            <input type="password" id="l-password" required autocomplete="current-password">
-          </div>
-          <div id="login-error" class="banner"></div>
-          <button type="submit" class="submit-btn">Iniciar sesión</button>
-        </form>
-      </div>
-
-      <div id="entry-view" style="display:none;">
-        <h2 id="form-title">Cargar lectura</h2>
-        <div class="editing-note" id="editing-note">
-          <span id="editing-note-text">Editando un registro</span>
-          <button type="button" id="cancel-edit">Cancelar</button>
+  <div class="grid-mid">
+    <section class="card chart-card">
+      <div class="chart-head">
+        <h2>Lluvias recientes</h2>
+        <div class="period-toggle" id="period-toggle">
+          <button type="button" data-period="7" class="active">7 días</button>
+          <button type="button" data-period="30">30 días</button>
+          <button type="button" data-period="year">Este año</button>
         </div>
-        <form id="entry-form">
-          <div class="field">
-            <label for="f-date">Fecha</label>
-            <input type="date" id="f-date" required>
-          </div>
-          <div class="field">
-            <label for="f-mm">Milímetros</label>
-            <input type="number" id="f-mm" min="0" max="500" step="0.1" placeholder="0.0" required>
-          </div>
-          <div class="field">
-            <label for="f-note">Nota (opcional)</label>
-            <textarea id="f-note" maxlength="140" placeholder="Granizo, tormenta, viento fuerte..."></textarea>
-          </div>
-          <button type="submit" class="submit-btn" id="submit-btn">Guardar registro</button>
-        </form>
       </div>
+      <div id="recent-chart-wrap"></div>
     </section>
 
-    <section class="card">
+    <section class="card calendar-card">
       <div class="chart-head">
-        <h2>Lluvia mensual</h2>
+        <h2 id="calendar-title">—</h2>
         <div class="year-nav">
-          <button type="button" id="year-prev" aria-label="Año anterior">‹</button>
-          <span id="year-label">2026</span>
-          <button type="button" id="year-next" aria-label="Año siguiente">›</button>
+          <button type="button" id="cal-prev" aria-label="Mes anterior">‹</button>
+          <button type="button" id="cal-next" aria-label="Mes siguiente">›</button>
         </div>
       </div>
-      <div class="chart-sub" id="chart-sub">Total del año: — mm</div>
-      <div id="chart-wrap"></div>
+      <div class="cal-weekdays">
+        <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="cal-legend">
+        <span><i class="dot tier-0"></i>0 mm</span>
+        <span><i class="dot tier-1"></i>&gt;0 mm</span>
+        <span><i class="dot tier-2"></i>≥10 mm</span>
+        <span><i class="dot tier-3"></i>≥30 mm</span>
+      </div>
     </section>
   </div>
 
-  <section class="card history">
-    <h2>Historial</h2>
-    <div class="history-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th class="num">mm</th>
-            <th>Nota</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="history-body"></tbody>
-      </table>
-    </div>
-    <div class="empty-history" id="empty-history" style="display:none;">Todavía no hay registros.</div>
-  </section>
+  <div class="grid-bottom">
+    <section class="card history-card">
+      <div class="chart-head">
+        <h2>Historial de lluvias</h2>
+        <select id="history-year" class="year-select"></select>
+      </div>
+      <div class="history-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th class="num">Lluvia (mm)</th>
+              <th>Observaciones</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
+      <div class="empty-history" id="empty-history" style="display:none;">Todavía no hay registros.</div>
+    </section>
 
-  <footer class="note">Datos almacenados en Supabase. El historial es público; cargar o editar requiere iniciar sesión.</footer>
+    <div class="side-stack">
+      <section class="card quote-card">
+        <svg viewBox="0 0 24 24" class="quote-icon"><path d="M17.5 19a4.5 4.5 0 0 0-.4-9A5.5 5.5 0 0 0 6.6 8 4.5 4.5 0 0 0 6.5 17H17z"/></svg>
+        <p id="quote-text">&nbsp;</p>
+      </section>
+
+      <section class="card summary-card">
+        <h2>Resumen</h2>
+        <div class="summary-row">
+          <span class="summary-label">
+            <svg viewBox="0 0 24 24" class="mini-icon"><path d="M12 2c-3.5 5-6 8.7-6 11.5A6 6 0 0 0 18 13.5C18 10.7 15.5 7 12 2z"/></svg>
+            Días con lluvia (este mes)
+          </span>
+          <span class="summary-value" id="summary-days">—</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">
+            <svg viewBox="0 0 24 24" class="mini-icon"><path d="M12 2c-3.5 5-6 8.7-6 11.5A6 6 0 0 0 18 13.5C18 10.7 15.5 7 12 2z"/></svg>
+            Máxima en un día
+          </span>
+          <span class="summary-value" id="summary-max">—</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">
+            <svg viewBox="0 0 24 24" class="mini-icon" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 13.5 12 5l8 8.5"/><path d="M6.5 12v7h11v-7"/></svg>
+            Promedio diario
+          </span>
+          <span class="summary-value" id="summary-avg">—</span>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <footer class="note">Datos almacenados en Supabase. Clima en tiempo real vía Open-Meteo. El historial es público; cargar o editar requiere iniciar sesión.</footer>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-head">
+      <h2 id="modal-title">Registrar lluvia de hoy</h2>
+      <button type="button" class="icon-btn modal-close" id="modal-close" aria-label="Cerrar">✕</button>
+    </div>
+    <form id="entry-form">
+      <div class="field">
+        <label for="f-date">Fecha</label>
+        <input type="date" id="f-date" required>
+      </div>
+      <div class="field">
+        <label for="f-mm">Milímetros</label>
+        <input type="number" id="f-mm" min="0" max="500" step="0.1" placeholder="0.0" required>
+      </div>
+      <div class="field">
+        <label for="f-note">Observaciones (opcional)</label>
+        <textarea id="f-note" maxlength="140" placeholder="Granizo, tormenta, viento fuerte..."></textarea>
+      </div>
+      <button type="submit" class="submit-btn" id="submit-btn">Guardar registro</button>
+    </form>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

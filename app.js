@@ -1,5 +1,19 @@
 (function () {
   const MONTHS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const MONTHS_LONG = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const WEEKDAY_MON0 = d => (d.getDay() + 6) % 7;
+
+  const WEATHER_LAT = -31.46737;
+  const WEATHER_LON = -64.35903;
+  const WEATHER_TZ = 'America/Argentina/Cordoba';
+
+  const QUOTES = [
+    'La lluvia también cuenta historias.',
+    'Cada lectura es un capítulo del año.',
+    'Lo que no se mide, se olvida; lo que se anota, se recuerda.',
+    'El pluviómetro no miente ni exagera.',
+    'Un milímetro por vez, así se arma un clima.',
+  ];
 
   function todayStr() {
     const d = new Date();
@@ -9,9 +23,16 @@
     const [y, m, d] = dateStr.split('-').map(Number);
     return new Date(y, m - 1, d);
   }
+  function ymd(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
   function formatShort(dateStr) {
     const d = parseLocal(dateStr);
-    return d.getDate() + ' ' + MONTHS[d.getMonth()].toLowerCase() + ' ' + d.getFullYear();
+    return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  function formatDM(dateStr) {
+    const d = parseLocal(dateStr);
+    return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
   }
   function fmtMm(n) {
     return (Math.round(n * 10) / 10).toLocaleString('es-AR', { minimumFractionDigits: n % 1 === 0 ? 0 : 1, maximumFractionDigits: 1 });
@@ -21,137 +42,271 @@
     d.textContent = s;
     return d.innerHTML;
   }
+  function daysInMonth(year, month) {
+    return new Date(year, month + 1, 0).getDate();
+  }
+
+  // --- Weather icons (WMO codes) ---
+  const ICONS = {
+    sun: '<circle cx="12" cy="12" r="4.2" fill="currentColor"/><g stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="12" y1="1.6" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22.4"/><line x1="1.6" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22.4" y2="12"/><line x1="4.6" y1="4.6" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.4" y2="19.4"/><line x1="4.6" y1="19.4" x2="6.3" y2="17.7"/><line x1="17.7" y1="6.3" x2="19.4" y2="4.6"/></g>',
+    cloud: '<path fill="currentColor" d="M6.5 19a4.5 4.5 0 0 1-.4-8.98A5.5 5.5 0 0 1 16.9 8.02 4.5 4.5 0 0 1 17 19H6.5z"/>',
+    cloudSun: '<circle cx="8" cy="7.5" r="3" fill="currentColor"/><g stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="8" y1="1.7" x2="8" y2="3.2"/><line x1="2.7" y1="7.5" x2="4.2" y2="7.5"/><line x1="3.9" y1="3.4" x2="5" y2="4.5"/></g><path fill="currentColor" d="M9 19a4.5 4.5 0 0 1-.4-8.97A5.5 5.5 0 0 1 19.4 9.5 4.5 4.5 0 0 1 19.5 19H9z" transform="translate(0.5 1)"/>',
+    fog: '<path fill="currentColor" d="M6.5 15a4.2 4.2 0 0 1-.3-8.4A5.3 5.3 0 0 1 16.3 6a4.2 4.2 0 0 1 .2 8h-10z"/><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="4" y1="18.2" x2="20" y2="18.2"/><line x1="6" y1="21" x2="18" y2="21"/></g>',
+    drizzle: '<path fill="currentColor" d="M6.5 13.5a4 4 0 0 1-.3-7.98A5 5 0 0 1 15.8 5a4 4 0 0 1 .2 7.5H6.5z"/><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="8" y1="17" x2="7" y2="19.4"/><line x1="12" y1="17" x2="11" y2="19.4"/><line x1="16" y1="17" x2="15" y2="19.4"/></g>',
+    rain: '<path fill="currentColor" d="M6.5 12.5a4 4 0 0 1-.3-7.98A5 5 0 0 1 15.8 4a4 4 0 0 1 .2 7.5H6.5z"/><g stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="7.5" y1="16" x2="6" y2="20.4"/><line x1="12" y1="16" x2="10.5" y2="20.4"/><line x1="16.5" y1="16" x2="15" y2="20.4"/></g>',
+    snow: '<path fill="currentColor" d="M6.5 12.5a4 4 0 0 1-.3-7.98A5 5 0 0 1 15.8 4a4 4 0 0 1 .2 7.5H6.5z"/><g fill="currentColor"><circle cx="7.5" cy="18" r="1.1"/><circle cx="12" cy="19.5" r="1.1"/><circle cx="16.5" cy="18" r="1.1"/></g>',
+    storm: '<path fill="currentColor" d="M6.5 12a4 4 0 0 1-.3-7.98A5 5 0 0 1 15.8 3.5a4 4 0 0 1 .2 7.5H6.5z"/><path fill="currentColor" d="m13 12.5-3.6 5h2.4l-1.4 4.5 4.4-5.6h-2.4z"/>',
+  };
+  const WEATHER_MAP = {
+    0: ['Despejado', 'sun'], 1: ['Mayormente despejado', 'cloudSun'], 2: ['Parcialmente nublado', 'cloudSun'], 3: ['Nublado', 'cloud'],
+    45: ['Niebla', 'fog'], 48: ['Niebla', 'fog'],
+    51: ['Llovizna leve', 'drizzle'], 53: ['Llovizna', 'drizzle'], 55: ['Llovizna intensa', 'drizzle'],
+    56: ['Llovizna helada', 'drizzle'], 57: ['Llovizna helada', 'drizzle'],
+    61: ['Lluvia leve', 'rain'], 63: ['Lluvia', 'rain'], 65: ['Lluvia intensa', 'rain'],
+    66: ['Lluvia helada', 'rain'], 67: ['Lluvia helada', 'rain'],
+    71: ['Nevada leve', 'snow'], 73: ['Nevada', 'snow'], 75: ['Nevada intensa', 'snow'], 77: ['Granizo fino', 'snow'],
+    80: ['Chubascos leves', 'rain'], 81: ['Chubascos', 'rain'], 82: ['Chubascos intensos', 'rain'],
+    85: ['Chubascos de nieve', 'snow'], 86: ['Chubascos de nieve', 'snow'],
+    95: ['Tormenta', 'storm'], 96: ['Tormenta con granizo', 'storm'], 99: ['Tormenta con granizo', 'storm'],
+  };
+  function weatherInfo(code) {
+    return WEATHER_MAP[code] || ['—', 'cloud'];
+  }
+  function svgIcon(key, viewBox) {
+    return '<svg viewBox="' + (viewBox || '0 0 24 24') + '">' + ICONS[key] + '</svg>';
+  }
+  function compass(deg) {
+    const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+    return dirs[Math.round(deg / 45) % 8];
+  }
 
   const el = {
+    topbarDate: document.getElementById('topbar-date'),
+    topbarGlyph: document.getElementById('topbar-weather-glyph'),
     banner: document.getElementById('banner'),
+
+    weatherIcon: document.getElementById('weather-icon'),
+    weatherTemp: document.getElementById('weather-temp'),
+    weatherCond: document.getElementById('weather-cond'),
+    weatherHum: document.getElementById('weather-hum'),
+    weatherWind: document.getElementById('weather-wind'),
+    weatherPressure: document.getElementById('weather-pressure'),
+
+    statToday: document.getElementById('stat-today'),
+    statTodaySub: document.getElementById('stat-today-sub'),
     statMonth: document.getElementById('stat-month'),
     statMonthSub: document.getElementById('stat-month-sub'),
     statYear: document.getElementById('stat-year'),
     statYearSub: document.getElementById('stat-year-sub'),
-    statLast: document.getElementById('stat-last'),
-    statLastSub: document.getElementById('stat-last-sub'),
-    authStatus: document.getElementById('auth-status'),
-    authEmail: document.getElementById('auth-email'),
-    logoutBtn: document.getElementById('logout-btn'),
-    loginView: document.getElementById('login-view'),
+
+    avatarBtn: document.getElementById('avatar-btn'),
+    popover: document.getElementById('avatar-popover'),
+    popoverLogin: document.getElementById('popover-login'),
+    popoverAccount: document.getElementById('popover-account'),
+    popoverEmail: document.getElementById('popover-email'),
     loginForm: document.getElementById('login-form'),
     lEmail: document.getElementById('l-email'),
     lPassword: document.getElementById('l-password'),
     loginError: document.getElementById('login-error'),
-    entryView: document.getElementById('entry-view'),
+    logoutBtn: document.getElementById('logout-btn'),
+
+    openRegisterBtn: document.getElementById('open-register-btn'),
+    modalBackdrop: document.getElementById('modal-backdrop'),
+    modalTitle: document.getElementById('modal-title'),
+    modalClose: document.getElementById('modal-close'),
     form: document.getElementById('entry-form'),
-    formTitle: document.getElementById('form-title'),
     fDate: document.getElementById('f-date'),
     fMm: document.getElementById('f-mm'),
     fNote: document.getElementById('f-note'),
     submitBtn: document.getElementById('submit-btn'),
-    editingNote: document.getElementById('editing-note'),
-    editingNoteText: document.getElementById('editing-note-text'),
-    cancelEdit: document.getElementById('cancel-edit'),
-    yearPrev: document.getElementById('year-prev'),
-    yearNext: document.getElementById('year-next'),
-    yearLabel: document.getElementById('year-label'),
-    chartSub: document.getElementById('chart-sub'),
-    chartWrap: document.getElementById('chart-wrap'),
+
+    periodToggle: document.getElementById('period-toggle'),
+    recentChartWrap: document.getElementById('recent-chart-wrap'),
+
+    calTitle: document.getElementById('calendar-title'),
+    calPrev: document.getElementById('cal-prev'),
+    calNext: document.getElementById('cal-next'),
+    calGrid: document.getElementById('cal-grid'),
+
+    historyYear: document.getElementById('history-year'),
     historyBody: document.getElementById('history-body'),
     emptyHistory: document.getElementById('empty-history'),
+
+    quoteText: document.getElementById('quote-text'),
+    summaryDays: document.getElementById('summary-days'),
+    summaryMax: document.getElementById('summary-max'),
+    summaryAvg: document.getElementById('summary-avg'),
   };
 
-  el.fDate.value = todayStr();
-
   let entries = [];
+  let entriesByDate = {};
   let loaded = false;
   let editingDate = null;
-  let chartYear = new Date().getFullYear();
+  let recentPeriod = '7';
+  let calYear = new Date().getFullYear();
+  let calMonth = new Date().getMonth();
+  let historyYearFilter = 'todos';
+  let currentSession = null;
+  let openRowMenu = null;
+
+  el.quoteText.textContent = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+
+  const now = new Date();
+  const dateLabel = now.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  el.topbarDate.textContent = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1);
 
   if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_ANON_KEY === 'undefined' || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    el.banner.textContent = 'Falta configurar config.js con la URL y la clave anónima de tu proyecto de Supabase. Mirá el README.';
+    el.banner.textContent = 'Falta configurar config.js con la URL y la clave anónima de tu proyecto de Supabase.';
     el.banner.classList.add('show');
     return;
   }
-
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  function dataYears() {
-    const ys = new Set(entries.map(e => parseLocal(e.date).getFullYear()));
-    ys.add(new Date().getFullYear());
-    return Array.from(ys);
+  // ---------- Weather ----------
+  async function fetchWeather() {
+    try {
+      const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + WEATHER_LAT + '&longitude=' + WEATHER_LON +
+        '&current=temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_direction_10m,weather_code&timezone=' + encodeURIComponent(WEATHER_TZ);
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('http ' + res.status);
+      const data = await res.json();
+      renderWeather(data.current);
+    } catch (e) {
+      el.weatherCond.textContent = 'No se pudo cargar el clima';
+    }
   }
+  function renderWeather(c) {
+    const [label, iconKey] = weatherInfo(c.weather_code);
+    el.weatherIcon.innerHTML = svgIcon(iconKey);
+    el.topbarGlyph.innerHTML = svgIcon(iconKey);
+    el.topbarGlyph.title = label;
+    el.weatherTemp.textContent = Math.round(c.temperature_2m) + '°C';
+    el.weatherCond.textContent = label;
+    el.weatherHum.textContent = Math.round(c.relative_humidity_2m) + '%';
+    el.weatherWind.textContent = Math.round(c.wind_speed_10m) + ' km/h (' + compass(c.wind_direction_10m) + ')';
+    el.weatherPressure.textContent = Math.round(c.surface_pressure) + ' hPa';
+  }
+  fetchWeather();
+  setInterval(fetchWeather, 15 * 60 * 1000);
 
+  // ---------- Rendering ----------
   function render() {
     renderStats();
-    renderChart();
+    renderRecentChart();
+    renderCalendar();
+    renderHistoryYearOptions();
     renderHistory();
-    renderYearNav();
+    renderSummary();
   }
 
   function renderStats() {
-    const now = new Date();
-    const curMonthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-    const curYear = now.getFullYear();
-
     if (!loaded) {
+      el.statToday.innerHTML = '… <span class="unit">mm</span>';
       el.statMonth.innerHTML = '… <span class="unit">mm</span>';
       el.statYear.innerHTML = '… <span class="unit">mm</span>';
-      el.statLast.textContent = '…';
       return;
     }
+    const nowD = new Date();
+    const today = todayStr();
+    const todayEntry = entriesByDate[today];
+    el.statToday.innerHTML = fmtMm(todayEntry ? todayEntry.mm : 0) + ' <span class="unit">mm</span>';
+    el.statTodaySub.textContent = todayEntry
+      ? (todayEntry.note || 'Registrado hoy')
+      : 'Sin precipitaciones';
 
-    const monthEntries = entries.filter(e => e.date.startsWith(curMonthKey));
-    const monthTotal = monthEntries.reduce((s, e) => s + e.mm, 0);
+    // Month: current month-to-date vs same day-range of previous month
+    const y = nowD.getFullYear(), m = nowD.getMonth(), dom = nowD.getDate();
+    const curMonthKey = y + '-' + String(m + 1).padStart(2, '0');
+    const monthTotal = entries.filter(e => e.date.startsWith(curMonthKey)).reduce((s, e) => s + e.mm, 0);
+    let prevY = y, prevM = m - 1;
+    if (prevM < 0) { prevM = 11; prevY -= 1; }
+    const prevMonthKey = prevY + '-' + String(prevM + 1).padStart(2, '0');
+    const prevDays = Math.min(dom, daysInMonth(prevY, prevM));
+    const prevMonthTotal = entries
+      .filter(e => e.date.startsWith(prevMonthKey) && Number(e.date.slice(8, 10)) <= prevDays)
+      .reduce((s, e) => s + e.mm, 0);
     el.statMonth.innerHTML = fmtMm(monthTotal) + ' <span class="unit">mm</span>';
-    el.statMonthSub.textContent = monthEntries.length + (monthEntries.length === 1 ? ' registro' : ' registros');
+    el.statMonthSub.innerHTML = deltaHtml(monthTotal, prevMonthTotal, 'vs mes anterior');
 
-    const yearEntries = entries.filter(e => parseLocal(e.date).getFullYear() === curYear);
-    const yearTotal = yearEntries.reduce((s, e) => s + e.mm, 0);
+    // Year: Jan1-to-today vs same period last year
+    const cutoff = String(m + 1).padStart(2, '0') + '-' + String(dom).padStart(2, '0');
+    const yearTotal = entries.filter(e => e.date.startsWith(String(y) + '-')).reduce((s, e) => s + e.mm, 0);
+    const prevYear = y - 1;
+    const prevYearTotal = entries
+      .filter(e => e.date.startsWith(String(prevYear) + '-') && e.date.slice(5) <= cutoff)
+      .reduce((s, e) => s + e.mm, 0);
     el.statYear.innerHTML = fmtMm(yearTotal) + ' <span class="unit">mm</span>';
-    el.statYearSub.textContent = yearEntries.length + (yearEntries.length === 1 ? ' registro' : ' registros');
+    el.statYearSub.innerHTML = deltaHtml(yearTotal, prevYearTotal, 'vs año anterior');
+  }
 
-    if (entries.length === 0) {
-      el.statLast.textContent = 'Sin datos';
-      el.statLastSub.textContent = 'Cargá la primera lectura';
-    } else {
-      const last = entries[0];
-      el.statLast.textContent = fmtMm(last.mm) + ' mm';
-      el.statLastSub.textContent = formatShort(last.date);
+  function deltaHtml(current, previous, label) {
+    if (previous <= 0) {
+      return current > 0 ? 'Sin datos del período anterior' : 'Sin datos aún';
     }
+    const pct = Math.round(((current - previous) / previous) * 100);
+    const up = pct >= 0;
+    return '<span class="delta ' + (up ? 'up' : 'down') + '">' + (up ? '↑' : '↓') + Math.abs(pct) + '%</span> ' + label;
   }
 
-  function renderYearNav() {
-    const years = dataYears();
-    const minYear = Math.min(...years);
-    el.yearLabel.textContent = chartYear;
-    el.yearPrev.disabled = chartYear <= minYear;
-    el.yearNext.disabled = chartYear >= new Date().getFullYear();
-  }
-
-  function renderChart() {
+  function renderRecentChart() {
     if (!loaded) {
-      el.chartWrap.innerHTML = '<div class="chart-empty">Cargando…</div>';
-      el.chartSub.textContent = 'Total del año: — mm';
+      el.recentChartWrap.innerHTML = '<div class="chart-empty">Cargando…</div>';
       return;
     }
-    const yearEntries = entries.filter(e => parseLocal(e.date).getFullYear() === chartYear);
+    if (recentPeriod === 'year') {
+      renderYearChart();
+      return;
+    }
+    const n = recentPeriod === '30' ? 30 : 7;
+    const days = [];
+    const base = new Date();
+    for (let i = n - 1; i >= 0; i--) {
+      const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() - i);
+      const key = ymd(d);
+      days.push({ date: key, mm: entriesByDate[key] ? entriesByDate[key].mm : 0, d });
+    }
+    const max = Math.max(...days.map(x => x.mm), 1);
+    const W = 640, H = 210, padL = 4, padR = 4, padB = 26, padT = 16;
+    const plotW = W - padL - padR;
+    const plotH = H - padT - padB;
+    const gap = n === 30 ? 3 : 8;
+    const barW = (plotW - gap * (n - 1)) / n;
+    const labelEvery = n === 30 ? 5 : 1;
+
+    let bars = '', labels = '';
+    days.forEach((day, i) => {
+      const h = day.mm / max * plotH;
+      const x = padL + i * (barW + gap);
+      const y = padT + plotH - h;
+      const isToday = day.date === todayStr();
+      bars += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + Math.max(h, 0).toFixed(1) + '" rx="2.5" fill="' + (isToday ? 'var(--accent)' : 'var(--accent-2)') + '"></rect>';
+      if (i % labelEvery === 0 || i === days.length - 1) {
+        labels += '<text x="' + (x + barW / 2).toFixed(1) + '" y="' + (H - 8).toFixed(1) + '" text-anchor="middle" font-size="9" font-family="var(--font-body)" fill="var(--ink-soft)">' + formatDM(day.date) + '</text>';
+      }
+    });
+    el.recentChartWrap.innerHTML = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Lluvia de los últimos ' + n + ' días">' +
+      '<line x1="' + padL + '" y1="' + (padT + plotH) + '" x2="' + (W - padR) + '" y2="' + (padT + plotH) + '" stroke="var(--line)" stroke-width="1"></line>' +
+      bars + labels + '</svg>';
+  }
+
+  function renderYearChart() {
+    const year = new Date().getFullYear();
+    const yearEntries = entries.filter(e => e.date.startsWith(String(year) + '-'));
     if (yearEntries.length === 0) {
-      el.chartWrap.innerHTML = '<div class="chart-empty">Sin registros para ' + chartYear + '.</div>';
-      el.chartSub.textContent = 'Total del año: 0 mm';
+      el.recentChartWrap.innerHTML = '<div class="chart-empty">Sin registros para ' + year + '.</div>';
       return;
     }
     const totals = new Array(12).fill(0);
-    yearEntries.forEach(e => { totals[parseLocal(e.date).getMonth()] += e.mm; });
-    const yearTotal = totals.reduce((a, b) => a + b, 0);
-    el.chartSub.textContent = 'Total del año: ' + fmtMm(yearTotal) + ' mm';
-
+    yearEntries.forEach(e => { totals[Number(e.date.slice(5, 7)) - 1] += e.mm; });
     const max = Math.max(...totals, 1);
     const W = 640, H = 210, padL = 4, padR = 4, padB = 24, padT = 20;
     const plotW = W - padL - padR;
     const plotH = H - padT - padB;
     const gap = 8;
     const barW = (plotW - gap * 11) / 12;
-    const curMonth = (chartYear === new Date().getFullYear()) ? new Date().getMonth() : -1;
+    const curMonth = new Date().getMonth();
 
-    let bars = '';
-    let labels = '';
+    let bars = '', labels = '';
     for (let i = 0; i < 12; i++) {
       const h = totals[i] / max * plotH;
       const x = padL + i * (barW + gap);
@@ -163,11 +318,65 @@
       }
       labels += '<text x="' + (x + barW / 2).toFixed(1) + '" y="' + (H - 6).toFixed(1) + '" text-anchor="middle" font-size="10" font-family="var(--font-body)" fill="' + (isCur ? 'var(--accent)' : 'var(--ink-soft)') + '" font-weight="' + (isCur ? '700' : '400') + '">' + MONTHS[i] + '</text>';
     }
-    const svg = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Lluvia mensual ' + chartYear + '">' +
+    el.recentChartWrap.innerHTML = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Lluvia mensual ' + year + '">' +
       '<line x1="' + padL + '" y1="' + (padT + plotH) + '" x2="' + (W - padR) + '" y2="' + (padT + plotH) + '" stroke="var(--line)" stroke-width="1"></line>' +
       bars + labels + '</svg>';
-    el.chartWrap.innerHTML = svg;
   }
+
+  el.periodToggle.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-period]');
+    if (!btn) return;
+    recentPeriod = btn.getAttribute('data-period');
+    [...el.periodToggle.querySelectorAll('button')].forEach(b => b.classList.toggle('active', b === btn));
+    renderRecentChart();
+  });
+
+  function renderCalendar() {
+    el.calTitle.textContent = MONTHS_LONG[calMonth] + ' ' + calYear;
+    const offset = WEEKDAY_MON0(new Date(calYear, calMonth, 1));
+    const total = daysInMonth(calYear, calMonth);
+    const today = todayStr();
+    let html = '';
+    for (let i = 0; i < offset; i++) html += '<div class="cal-day empty"></div>';
+    for (let day = 1; day <= total; day++) {
+      const key = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+      const entry = entriesByDate[key];
+      const mm = entry ? entry.mm : 0;
+      let tier = 0;
+      if (mm >= 30) tier = 3; else if (mm >= 10) tier = 2; else if (mm > 0) tier = 1;
+      const isToday = key === today;
+      const titleParts = [formatShort(key) + ': ' + fmtMm(mm) + ' mm'];
+      if (entry && entry.note) titleParts.push(entry.note);
+      html += '<div class="cal-day tier-' + tier + (isToday ? ' is-today' : '') + '" title="' + escapeHtml(titleParts.join(' — ')) + '">' + day + '</div>';
+    }
+    el.calGrid.innerHTML = html;
+  }
+  el.calPrev.addEventListener('click', () => {
+    calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  });
+  el.calNext.addEventListener('click', () => {
+    calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+  });
+
+  function renderHistoryYearOptions() {
+    const years = Array.from(new Set(entries.map(e => e.date.slice(0, 4)))).sort((a, b) => b.localeCompare(a));
+    const prevValue = el.historyYear.value || historyYearFilter;
+    el.historyYear.innerHTML = '<option value="todos">Todos los años</option>' +
+      years.map(y => '<option value="' + y + '">' + y + '</option>').join('');
+    if (years.includes(prevValue) || prevValue === 'todos') {
+      el.historyYear.value = prevValue;
+      historyYearFilter = prevValue;
+    } else {
+      el.historyYear.value = 'todos';
+      historyYearFilter = 'todos';
+    }
+  }
+  el.historyYear.addEventListener('change', () => {
+    historyYearFilter = el.historyYear.value;
+    renderHistory();
+  });
 
   function renderHistory() {
     if (!loaded) {
@@ -176,19 +385,22 @@
       el.emptyHistory.textContent = 'Cargando…';
       return;
     }
-    if (entries.length === 0) {
+    const filtered = historyYearFilter === 'todos' ? entries : entries.filter(e => e.date.startsWith(historyYearFilter));
+    if (filtered.length === 0) {
       el.historyBody.innerHTML = '';
       el.emptyHistory.style.display = 'block';
-      el.emptyHistory.textContent = 'Todavía no hay registros.';
+      el.emptyHistory.textContent = 'No hay registros para este filtro.';
       return;
     }
     el.emptyHistory.style.display = 'none';
     const canEdit = !!currentSession;
-    el.historyBody.innerHTML = entries.map(e => {
+    el.historyBody.innerHTML = filtered.map(e => {
       const note = e.note ? escapeHtml(e.note) : '';
       const actions = canEdit
-        ? '<button type="button" class="icon-btn" data-edit="' + e.date + '">Editar</button>' +
-          '<button type="button" class="icon-btn danger" data-del="' + e.date + '">Eliminar</button>'
+        ? '<button type="button" class="kebab-btn" data-menu="' + e.date + '" aria-label="Acciones"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="19" r="1.6" fill="currentColor"/></svg></button>' +
+          (openRowMenu === e.date
+            ? '<div class="row-menu"><button type="button" data-edit="' + e.date + '">Editar</button><button type="button" class="danger" data-del="' + e.date + '">Eliminar</button></div>'
+            : '')
         : '';
       return '<tr>' +
         '<td>' + formatShort(e.date) + '</td>' +
@@ -199,52 +411,147 @@
     }).join('');
   }
 
-  function startEdit(date) {
-    const entry = entries.find(e => e.date === date);
-    if (!entry) return;
-    editingDate = date;
-    el.fDate.value = date;
-    el.fDate.readOnly = true;
-    el.fMm.value = entry.mm;
-    el.fNote.value = entry.note || '';
-    el.formTitle.textContent = 'Editar lectura';
-    el.submitBtn.textContent = 'Actualizar registro';
-    el.editingNoteText.textContent = 'Editando el registro del ' + formatShort(date);
-    el.editingNote.classList.add('show');
-    el.fMm.focus();
-  }
-
-  function cancelEdit() {
-    editingDate = null;
-    el.fDate.readOnly = false;
-    el.fDate.value = todayStr();
-    el.fMm.value = '';
-    el.fNote.value = '';
-    el.formTitle.textContent = 'Cargar lectura';
-    el.submitBtn.textContent = 'Guardar registro';
-    el.editingNote.classList.remove('show');
-  }
-
-  el.cancelEdit.addEventListener('click', cancelEdit);
-
   el.historyBody.addEventListener('click', async (ev) => {
-    const editDate = ev.target.getAttribute('data-edit');
-    const delDate = ev.target.getAttribute('data-del');
-    if (editDate) startEdit(editDate);
-    if (delDate) {
-      if (confirm('¿Eliminar el registro del ' + formatShort(delDate) + '?')) {
-        const { error } = await client.from('rain_entries').delete().eq('date', delDate);
+    const menuBtn = ev.target.closest('[data-menu]');
+    const editBtn = ev.target.closest('[data-edit]');
+    const delBtn = ev.target.closest('[data-del]');
+    if (menuBtn) {
+      const date = menuBtn.getAttribute('data-menu');
+      openRowMenu = openRowMenu === date ? null : date;
+      renderHistory();
+      return;
+    }
+    if (editBtn) {
+      openRowMenu = null;
+      openEntryModal(editBtn.getAttribute('data-edit'));
+      return;
+    }
+    if (delBtn) {
+      const date = delBtn.getAttribute('data-del');
+      openRowMenu = null;
+      renderHistory();
+      if (confirm('¿Eliminar el registro del ' + formatShort(date) + '?')) {
+        const { error } = await client.from('rain_entries').delete().eq('date', date);
         if (error) {
           el.banner.textContent = 'No se pudo eliminar el registro.';
           el.banner.classList.add('show');
         }
-        if (editingDate === delDate) cancelEdit();
       }
     }
   });
+  document.addEventListener('click', (ev) => {
+    if (openRowMenu && !ev.target.closest('.actions')) {
+      openRowMenu = null;
+      renderHistory();
+    }
+  });
 
-  el.yearPrev.addEventListener('click', () => { chartYear--; renderChart(); renderYearNav(); });
-  el.yearNext.addEventListener('click', () => { chartYear++; renderChart(); renderYearNav(); });
+  function renderSummary() {
+    if (!loaded) return;
+    const nowD = new Date();
+    const y = nowD.getFullYear(), m = nowD.getMonth(), dom = nowD.getDate();
+    const curMonthKey = y + '-' + String(m + 1).padStart(2, '0');
+    const monthEntries = entries.filter(e => e.date.startsWith(curMonthKey));
+    const rainyDays = monthEntries.filter(e => e.mm > 0).length;
+    el.summaryDays.textContent = rainyDays + (rainyDays === 1 ? ' día' : ' días');
+    if (monthEntries.length === 0) {
+      el.summaryMax.textContent = '—';
+      el.summaryAvg.textContent = '0 mm';
+      return;
+    }
+    const maxEntry = monthEntries.reduce((a, b) => (b.mm > a.mm ? b : a));
+    el.summaryMax.textContent = fmtMm(maxEntry.mm) + ' mm (' + formatDM(maxEntry.date) + ')';
+    const monthTotal = monthEntries.reduce((s, e) => s + e.mm, 0);
+    el.summaryAvg.textContent = fmtMm(monthTotal / dom) + ' mm';
+  }
+
+  // ---------- Avatar popover ----------
+  function openPopover() {
+    el.popover.hidden = false;
+    if (currentSession) {
+      el.popoverLogin.hidden = true;
+      el.popoverAccount.hidden = false;
+      el.popoverEmail.textContent = currentSession.user.email;
+    } else {
+      el.popoverLogin.hidden = false;
+      el.popoverAccount.hidden = true;
+      el.lEmail.focus();
+    }
+  }
+  function closePopover() { el.popover.hidden = true; }
+  el.avatarBtn.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    el.popover.hidden ? openPopover() : closePopover();
+  });
+  document.addEventListener('click', (ev) => {
+    if (!el.popover.hidden && !ev.target.closest('.avatar-wrap')) closePopover();
+  });
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape') { closePopover(); closeModal(); }
+  });
+
+  el.loginForm.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    el.loginError.classList.remove('show');
+    const { error } = await client.auth.signInWithPassword({
+      email: el.lEmail.value.trim(),
+      password: el.lPassword.value,
+    });
+    if (error) {
+      el.loginError.textContent = 'Email o contraseña incorrectos.';
+      el.loginError.classList.add('show');
+      return;
+    }
+    el.lPassword.value = '';
+    closePopover();
+  });
+  el.logoutBtn.addEventListener('click', async () => {
+    await client.auth.signOut();
+    closePopover();
+  });
+
+  function applyAuthState(session) {
+    currentSession = session;
+    renderHistory();
+  }
+  client.auth.getSession().then(({ data }) => applyAuthState(data.session));
+  client.auth.onAuthStateChange((_event, session) => applyAuthState(session));
+
+  // ---------- Entry modal ----------
+  function openEntryModal(dateToEdit) {
+    if (!currentSession) {
+      openPopover();
+      return;
+    }
+    if (dateToEdit) {
+      const entry = entriesByDate[dateToEdit];
+      if (!entry) return;
+      editingDate = dateToEdit;
+      el.modalTitle.textContent = 'Editar lectura';
+      el.fDate.value = dateToEdit;
+      el.fDate.readOnly = true;
+      el.fMm.value = entry.mm;
+      el.fNote.value = entry.note || '';
+      el.submitBtn.textContent = 'Actualizar registro';
+    } else {
+      editingDate = null;
+      el.modalTitle.textContent = 'Registrar lluvia de hoy';
+      el.fDate.value = todayStr();
+      el.fDate.readOnly = false;
+      el.fMm.value = '';
+      el.fNote.value = '';
+      el.submitBtn.textContent = 'Guardar registro';
+    }
+    el.modalBackdrop.hidden = false;
+    el.fMm.focus();
+  }
+  function closeModal() {
+    el.modalBackdrop.hidden = true;
+    editingDate = null;
+  }
+  el.openRegisterBtn.addEventListener('click', (ev) => { ev.stopPropagation(); openEntryModal(null); });
+  el.modalClose.addEventListener('click', closeModal);
+  el.modalBackdrop.addEventListener('click', (ev) => { if (ev.target === el.modalBackdrop) closeModal(); });
 
   el.form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -262,51 +569,10 @@
       alert('No se pudo guardar el registro. Probá de nuevo.');
       return;
     }
-    cancelEdit();
+    closeModal();
   });
 
-  // --- Auth ---
-  let currentSession = null;
-
-  el.loginForm.addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    el.loginError.classList.remove('show');
-    const { error } = await client.auth.signInWithPassword({
-      email: el.lEmail.value.trim(),
-      password: el.lPassword.value,
-    });
-    if (error) {
-      el.loginError.textContent = 'Email o contraseña incorrectos.';
-      el.loginError.classList.add('show');
-      return;
-    }
-    el.lPassword.value = '';
-  });
-
-  el.logoutBtn.addEventListener('click', async () => {
-    await client.auth.signOut();
-  });
-
-  function applyAuthState(session) {
-    currentSession = session;
-    if (session) {
-      el.authStatus.classList.add('show');
-      el.authEmail.textContent = session.user.email;
-      el.loginView.style.display = 'none';
-      el.entryView.style.display = 'block';
-    } else {
-      el.authStatus.classList.remove('show');
-      el.loginView.style.display = 'block';
-      el.entryView.style.display = 'none';
-      cancelEdit();
-    }
-    renderHistory();
-  }
-
-  client.auth.getSession().then(({ data }) => applyAuthState(data.session));
-  client.auth.onAuthStateChange((_event, session) => applyAuthState(session));
-
-  // --- Data ---
+  // ---------- Data ----------
   async function fetchEntries() {
     const { data, error } = await client
       .from('rain_entries')
@@ -320,6 +586,8 @@
     }
     el.banner.classList.remove('show');
     entries = data;
+    entriesByDate = {};
+    entries.forEach(e => { entriesByDate[e.date] = e; });
     loaded = true;
     render();
   }
