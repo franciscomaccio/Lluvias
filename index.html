@@ -162,20 +162,32 @@
       <h2>Niveles de diques de Córdoba</h2>
       <span class="dams-updated" id="dams-updated">—</span>
     </div>
-    <div class="history-scroll">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Dique</th>
-            <th class="num">Cota vert.</th>
-            <th class="num">Cota actual</th>
-            <th class="num">Diferencia</th>
-          </tr>
-        </thead>
-        <tbody id="dams-body"></tbody>
-      </table>
+    <div class="dams-body-grid">
+      <div class="dams-table-col">
+        <div class="history-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Dique</th>
+                <th class="num">Cota vert.</th>
+                <th class="num">Cota actual</th>
+                <th class="num">Diferencia</th>
+              </tr>
+            </thead>
+            <tbody id="dams-body"></tbody>
+          </table>
+        </div>
+        <div class="dams-source">Fuente: <a href="https://www.diquesdecordoba.com.ar/" target="_blank" rel="noopener">diquesdecordoba.com.ar</a> (APRHI Córdoba / Omixon SRL)</div>
+      </div>
+      <div class="dams-tanks-col">
+        <div class="dam-tanks-grid" id="dam-tanks-grid"></div>
+        <div class="dam-tanks-legend">
+          <span>▾ Cota vertedero (máx.)</span>
+          <span><i class="dot tank-dot"></i>Cota actual</span>
+          <span>% Porcentaje de llenado</span>
+        </div>
+      </div>
     </div>
-    <div class="dams-source">Fuente: <a href="https://www.diquesdecordoba.com.ar/" target="_blank" rel="noopener">diquesdecordoba.com.ar</a> (APRHI Córdoba / Omixon SRL)</div>
   </section>
 
   <div class="grid-bottom">

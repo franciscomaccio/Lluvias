@@ -161,6 +161,7 @@
 
     damsBody: document.getElementById('dams-body'),
     damsUpdated: document.getElementById('dams-updated'),
+    damTanksGrid: document.getElementById('dam-tanks-grid'),
 
     totalsBody: document.getElementById('totals-body'),
     cumulativeLegend: document.getElementById('cumulative-legend'),
@@ -754,6 +755,39 @@
     .subscribe();
 
   // ---------- Dam levels ----------
+  function damTankSvg(pct, uid) {
+    const W = 64, H = 120, r = 16;
+    const clamped = Math.max(0, Math.min(100, pct));
+    const innerH = H - 2;
+    const fillH = clamped / 100 * innerH;
+    const fillY = H - 1 - fillH;
+    const gradId = 'tankGrad' + uid;
+    const clipId = 'tankClip' + uid;
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" class="tank-svg" role="img" aria-label="Nivel al ' + Math.round(clamped) + '%">' +
+      '<defs><linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="var(--accent-2)"/><stop offset="100%" stop-color="var(--accent)"/>' +
+      '</linearGradient><clipPath id="' + clipId + '"><rect x="1" y="1" width="' + (W - 2) + '" height="' + innerH + '" rx="' + r + '"/></clipPath></defs>' +
+      '<rect x="1" y="1" width="' + (W - 2) + '" height="' + innerH + '" rx="' + r + '" fill="var(--surface-2)" stroke="var(--line)" stroke-width="1.5"></rect>' +
+      '<g clip-path="url(#' + clipId + ')"><rect x="0" y="' + fillY.toFixed(1) + '" width="' + W + '" height="' + (fillH + 2).toFixed(1) + '" fill="url(#' + gradId + ')"></rect></g>' +
+      '<text x="' + (W / 2) + '" y="88" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff" font-family="var(--font-mono)">' + Math.round(clamped) + '%</text>' +
+      '</svg>';
+  }
+
+  function renderDamTanks(rows) {
+    el.damTanksGrid.innerHTML = rows.map((r, i) => {
+      const pct = r.spillway_level > 0 ? (r.current_level / r.spillway_level * 100) : 0;
+      const diffClass = r.diff >= 0 ? 'diff-up' : 'diff-down';
+      const sign = r.diff > 0 ? '+' : '';
+      return '<div class="dam-tank">' +
+        '<div class="dam-tank-name">' + escapeHtml(r.dam_name) + '</div>' +
+        '<div class="dam-tank-max">▾ ' + fmtNum2(r.spillway_level) + ' m</div>' +
+        damTankSvg(pct, i) +
+        '<div class="dam-tank-diff ' + diffClass + '">' + sign + fmtNum2(r.diff) + ' m</div>' +
+        '<div class="dam-tank-diff-label">Diferencia</div>' +
+        '</div>';
+    }).join('');
+  }
+
   async function fetchDamLevels() {
     const { data, error } = await client
       .from('dam_levels')
@@ -762,6 +796,7 @@
       .limit(64);
     if (error || !data || data.length === 0) {
       el.damsBody.innerHTML = '<tr><td colspan="4">Sin datos todavía.</td></tr>';
+      el.damTanksGrid.innerHTML = '';
       el.damsUpdated.textContent = '';
       return;
     }
@@ -778,6 +813,7 @@
       return '<tr><td>' + escapeHtml(r.dam_name) + '</td><td class="num">' + fmtNum2(r.spillway_level) +
         '</td><td class="num">' + fmtNum2(r.current_level) + '</td><td class="num ' + diffClass + '">' + sign + fmtNum2(r.diff) + '</td></tr>';
     }).join('');
+    renderDamTanks(rows);
   }
   client
     .channel('dam_levels_changes')

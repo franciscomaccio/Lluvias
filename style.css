@@ -482,6 +482,62 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
 }
 .dams-source a { color: var(--accent); }
 
+.dams-body-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .dams-body-grid { grid-template-columns: 1fr; }
+}
+.dam-tanks-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(64px, 1fr));
+  gap: 10px 12px;
+}
+@media (max-width: 480px) {
+  .dam-tanks-grid { grid-template-columns: repeat(3, minmax(60px, 1fr)); }
+}
+.dam-tank { text-align: center; }
+.dam-tank-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 2px;
+  min-height: 2.4em;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.dam-tank-max {
+  font-size: 0.68rem;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  margin-bottom: 4px;
+}
+.tank-svg { width: 100%; height: auto; }
+.dam-tank-diff {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.78rem;
+  margin-top: 6px;
+}
+.dam-tank-diff-label {
+  font-size: 0.64rem;
+  color: var(--ink-soft);
+}
+.dam-tanks-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 16px;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+.dam-tanks-legend span { display: flex; align-items: center; gap: 5px; }
+.dot.tank-dot { background: var(--accent); }
+
 /* Yearly comparison */
 .grid-yearly {
   display: grid;
