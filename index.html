@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pluviómetro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%A7%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <div class="eyebrow">
+      <svg viewBox="0 0 24 24"><path d="M12 2c-3.5 5-6 8.7-6 11.5A6 6 0 0 0 18 13.5C18 10.7 15.5 7 12 2z"/></svg>
+      Registro personal
+    </div>
+    <h1>Pluviómetro</h1>
+    <p>Milímetros de lluvia caídos en casa, día por día. Cargá cada lectura después de la lluvia y llevá el historial mensual y anual.</p>
+  </header>
+
+  <div id="banner" class="banner"></div>
+
+  <section class="stats">
+    <div class="stat">
+      <div class="label">Este mes</div>
+      <div class="value" id="stat-month">— <span class="unit">mm</span></div>
+      <div class="sub" id="stat-month-sub">&nbsp;</div>
+    </div>
+    <div class="stat">
+      <div class="label">Este año</div>
+      <div class="value" id="stat-year">— <span class="unit">mm</span></div>
+      <div class="sub" id="stat-year-sub">&nbsp;</div>
+    </div>
+    <div class="stat">
+      <div class="label">Último registro</div>
+      <div class="value" id="stat-last">—</div>
+      <div class="sub" id="stat-last-sub">&nbsp;</div>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="card" id="write-card">
+      <div id="auth-status" class="auth-status" style="display:none;">
+        <span id="auth-email"></span>
+        <button type="button" id="logout-btn" class="icon-btn">Cerrar sesión</button>
+      </div>
+
+      <div id="login-view">
+        <h2>Iniciar sesión</h2>
+        <p class="chart-sub">El historial es público. Para cargar o editar registros necesitás iniciar sesión.</p>
+        <form id="login-form">
+          <div class="field">
+            <label for="l-email">Email</label>
+            <input type="email" id="l-email" required autocomplete="username">
+          </div>
+          <div class="field">
+            <label for="l-password">Contraseña</label>
+            <input type="password" id="l-password" required autocomplete="current-password">
+          </div>
+          <div id="login-error" class="banner"></div>
+          <button type="submit" class="submit-btn">Iniciar sesión</button>
+        </form>
+      </div>
+
+      <div id="entry-view" style="display:none;">
+        <h2 id="form-title">Cargar lectura</h2>
+        <div class="editing-note" id="editing-note">
+          <span id="editing-note-text">Editando un registro</span>
+          <button type="button" id="cancel-edit">Cancelar</button>
+        </div>
+        <form id="entry-form">
+          <div class="field">
+            <label for="f-date">Fecha</label>
+            <input type="date" id="f-date" required>
+          </div>
+          <div class="field">
+            <label for="f-mm">Milímetros</label>
+            <input type="number" id="f-mm" min="0" max="500" step="0.1" placeholder="0.0" required>
+          </div>
+          <div class="field">
+            <label for="f-note">Nota (opcional)</label>
+            <textarea id="f-note" maxlength="140" placeholder="Granizo, tormenta, viento fuerte..."></textarea>
+          </div>
+          <button type="submit" class="submit-btn" id="submit-btn">Guardar registro</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="chart-head">
+        <h2>Lluvia mensual</h2>
+        <div class="year-nav">
+          <button type="button" id="year-prev" aria-label="Año anterior">‹</button>
+          <span id="year-label">2026</span>
+          <button type="button" id="year-next" aria-label="Año siguiente">›</button>
+        </div>
+      </div>
+      <div class="chart-sub" id="chart-sub">Total del año: — mm</div>
+      <div id="chart-wrap"></div>
+    </section>
+  </div>
+
+  <section class="card history">
+    <h2>Historial</h2>
+    <div class="history-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th class="num">mm</th>
+            <th>Nota</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="history-body"></tbody>
+      </table>
+    </div>
+    <div class="empty-history" id="empty-history" style="display:none;">Todavía no hay registros.</div>
+  </section>
+
+  <footer class="note">Datos almacenados en Supabase. El historial es público; cargar o editar requiere iniciar sesión.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
