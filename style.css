@@ -58,6 +58,18 @@ svg { display: block; }
   gap: 14px;
 }
 .topbar-place { text-align: right; }
+.zone-select {
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  max-width: 220px;
+  text-overflow: ellipsis;
+}
+.zone-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .place-name {
   display: flex;
   align-items: center;
@@ -126,6 +138,20 @@ svg { display: block; }
   color: var(--ink);
 }
 .ghost-btn:hover { background: var(--line); }
+.link-btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 12px;
+  padding: 4px;
+}
+.link-btn:hover { text-decoration: underline; }
 
 /* Greeting row */
 .greeting {
@@ -169,6 +195,11 @@ svg { display: block; }
 }
 .banner.show { display: block; }
 .page-banner { margin-bottom: 22px; }
+.banner-success {
+  background: color-mix(in srgb, var(--success) 14%, var(--surface));
+  color: var(--success);
+  border-color: var(--success);
+}
 
 /* Stats */
 .stats-grid {
@@ -705,7 +736,29 @@ form input:read-only { color: var(--ink-soft); }
   width: 100%;
   max-width: 400px;
   padding: 22px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
+.signup-modal { max-width: 440px; }
+.field-hint {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin: -2px 0 8px;
+}
+.small-btn {
+  width: auto;
+  padding: 7px 12px;
+  font-size: 0.8rem;
+  margin-bottom: 10px;
+}
+.signup-map {
+  height: 220px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.signup-map .leaflet-container { font-family: var(--font-body); }
 .modal-head {
   display: flex;
   align-items: center;

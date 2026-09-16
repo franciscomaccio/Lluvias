@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,7 +23,7 @@
       <div class="topbar-place">
         <div class="place-name">
           <svg viewBox="0 0 24 24" class="pin-icon"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="9" r="2.4" fill="currentColor"/></svg>
-          Malagueño, Córdoba, AR
+          <select id="zone-select" class="zone-select"><option>Cargando zonas…</option></select>
         </div>
         <div class="place-date" id="topbar-date">&nbsp;</div>
       </div>
@@ -47,6 +48,7 @@
               <div id="login-error" class="banner"></div>
               <button type="submit" class="submit-btn">Iniciar sesión</button>
             </form>
+            <button type="button" class="link-btn" id="open-signup-btn">¿No tenés cuenta? Registrate</button>
           </div>
           <div id="popover-account" hidden>
             <h3>Tu cuenta</h3>
@@ -298,7 +300,41 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="signup-modal-backdrop" hidden>
+  <div class="modal signup-modal" role="dialog" aria-modal="true" aria-labelledby="signup-modal-title">
+    <div class="modal-head">
+      <h2 id="signup-modal-title">Crear cuenta</h2>
+      <button type="button" class="icon-btn modal-close" id="signup-modal-close" aria-label="Cerrar">✕</button>
+    </div>
+    <form id="signup-form">
+      <div class="field">
+        <label for="s-name">Tu nombre</label>
+        <input type="text" id="s-name" required maxlength="60" placeholder="Cómo te vamos a mostrar en el selector">
+      </div>
+      <div class="field">
+        <label for="s-email">Email</label>
+        <input type="email" id="s-email" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="s-password">Contraseña</label>
+        <input type="password" id="s-password" required minlength="6" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>Tu zona de lluvia</label>
+        <p class="field-hint">Usá tu ubicación actual o marcá el punto en el mapa.</p>
+        <button type="button" class="ghost-btn small-btn" id="use-geo-btn">📍 Usar mi ubicación actual</button>
+        <div id="signup-map" class="signup-map"></div>
+        <input type="text" id="s-location-label" maxlength="80" placeholder="Nombre de la zona (ej: Malagueño, Córdoba)" required>
+      </div>
+      <div id="signup-error" class="banner"></div>
+      <div id="signup-success" class="banner banner-success">¡Listo! Te enviamos un email para confirmar tu cuenta. Una vez confirmada, iniciá sesión desde el avatar.</div>
+      <button type="submit" class="submit-btn" id="signup-submit-btn">Crear cuenta</button>
+    </form>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="config.js"></script>
 <script src="app.js"></script>
 </body>

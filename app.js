@@ -3,8 +3,8 @@
   const MONTHS_LONG = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const WEEKDAY_MON0 = d => (d.getDay() + 6) % 7;
 
-  const WEATHER_LAT = -31.46737;
-  const WEATHER_LON = -64.35903;
+  let WEATHER_LAT = -31.46737;
+  let WEATHER_LON = -64.35903;
   const WEATHER_TZ = 'America/Argentina/Cordoba';
 
   const YEAR_COLORS = ['#2f6f9e', '#c2703d', '#4f8f5b', '#8a4f9e', '#a4453a', '#3d8f95'];
@@ -107,6 +107,7 @@
     topbarDate: document.getElementById('topbar-date'),
     topbarGlyph: document.getElementById('topbar-weather-glyph'),
     banner: document.getElementById('banner'),
+    zoneSelect: document.getElementById('zone-select'),
 
     weatherIcon: document.getElementById('weather-icon'),
     weatherTemp: document.getElementById('weather-temp'),
@@ -132,6 +133,20 @@
     lPassword: document.getElementById('l-password'),
     loginError: document.getElementById('login-error'),
     logoutBtn: document.getElementById('logout-btn'),
+    openSignupBtn: document.getElementById('open-signup-btn'),
+
+    signupBackdrop: document.getElementById('signup-modal-backdrop'),
+    signupClose: document.getElementById('signup-modal-close'),
+    signupForm: document.getElementById('signup-form'),
+    sName: document.getElementById('s-name'),
+    sEmail: document.getElementById('s-email'),
+    sPassword: document.getElementById('s-password'),
+    useGeoBtn: document.getElementById('use-geo-btn'),
+    signupMapEl: document.getElementById('signup-map'),
+    sLocationLabel: document.getElementById('s-location-label'),
+    signupError: document.getElementById('signup-error'),
+    signupSuccess: document.getElementById('signup-success'),
+    signupSubmitBtn: document.getElementById('signup-submit-btn'),
 
     openRegisterBtn: document.getElementById('open-register-btn'),
     modalBackdrop: document.getElementById('modal-backdrop'),
@@ -188,6 +203,8 @@
   let historyYearFilter = 'todos';
   let currentSession = null;
   let openRowMenu = null;
+  let profiles = [];
+  let selectedUserId = null;
 
   el.quoteText.textContent = QUOTES[Math.floor(Math.random() * QUOTES.length)];
 
@@ -201,6 +218,53 @@
     return;
   }
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ---------- Zonas / usuarios ----------
+  function canWriteCurrentZone() {
+    return !!(currentSession && selectedUserId && currentSession.user.id === selectedUserId);
+  }
+  function updateWriteAccess() {
+    el.openRegisterBtn.style.display = canWriteCurrentZone() ? 'inline-flex' : 'none';
+    renderHistory();
+  }
+  function populateZoneSelect() {
+    const prev = selectedUserId;
+    el.zoneSelect.innerHTML = profiles.map(p =>
+      '<option value="' + p.id + '">' + escapeHtml(p.display_name) + ' — ' + escapeHtml(p.location_label) + '</option>'
+    ).join('');
+    if (prev && profiles.some(p => p.id === prev)) {
+      el.zoneSelect.value = prev;
+    } else {
+      const def = profiles.find(p => p.is_default) || profiles[0];
+      if (def) selectZone(def.id);
+    }
+  }
+  function selectZone(userId) {
+    const profile = profiles.find(p => p.id === userId);
+    if (!profile) return;
+    selectedUserId = userId;
+    el.zoneSelect.value = userId;
+    WEATHER_LAT = profile.lat;
+    WEATHER_LON = profile.lon;
+    fetchWeather();
+    fetchEntries();
+    updateWriteAccess();
+  }
+  el.zoneSelect.addEventListener('change', () => selectZone(el.zoneSelect.value));
+
+  async function fetchProfiles() {
+    const { data, error } = await client
+      .from('profiles')
+      .select('id, display_name, location_label, lat, lon, is_default')
+      .order('created_at', { ascending: true });
+    if (error || !data) return;
+    profiles = data;
+    populateZoneSelect();
+  }
+  client
+    .channel('profiles_changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, fetchProfiles)
+    .subscribe();
 
   // ---------- Weather ----------
   const RAIN_FORECAST_MM_THRESHOLD = 1;
@@ -586,7 +650,7 @@
       return;
     }
     el.emptyHistory.style.display = 'none';
-    const canEdit = !!currentSession;
+    const canEdit = canWriteCurrentZone();
     el.historyBody.innerHTML = filtered.map(e => {
       const note = e.note ? escapeHtml(e.note) : '';
       const actions = canEdit
@@ -624,7 +688,7 @@
       openRowMenu = null;
       renderHistory();
       if (confirm('¿Eliminar el registro del ' + formatShort(date) + '?')) {
-        const { error } = await client.from('rain_entries').delete().eq('date', date);
+        const { error } = await client.from('rain_entries').delete().eq('date', date).eq('user_id', selectedUserId);
         if (error) {
           el.banner.textContent = 'No se pudo eliminar el registro.';
           el.banner.classList.add('show');
@@ -705,8 +769,7 @@
 
   function applyAuthState(session) {
     currentSession = session;
-    el.openRegisterBtn.style.display = session ? 'inline-flex' : 'none';
-    renderHistory();
+    updateWriteAccess();
   }
   client.auth.getSession().then(({ data }) => applyAuthState(data.session));
   client.auth.onAuthStateChange((_event, session) => applyAuthState(session));
@@ -717,6 +780,7 @@
       openPopover();
       return;
     }
+    if (!canWriteCurrentZone()) return;
     if (dateToEdit) {
       const entry = entriesByDate[dateToEdit];
       if (!entry) return;
@@ -756,7 +820,7 @@
 
     el.submitBtn.disabled = true;
     const { error } = await client.from('rain_entries').upsert({
-      date, mm, note: note || null, updated_at: new Date().toISOString(),
+      date, mm, note: note || null, user_id: currentSession.user.id, updated_at: new Date().toISOString(),
     });
     el.submitBtn.disabled = false;
     if (error) {
@@ -766,11 +830,127 @@
     closeModal();
   });
 
+  // ---------- Signup (mapa + geolocalización) ----------
+  let signupMap = null;
+  let signupMarker = null;
+  let signupLat = null;
+  let signupLon = null;
+
+  function openSignupModal() {
+    el.signupError.classList.remove('show');
+    el.signupSuccess.classList.remove('show');
+    [...el.signupForm.elements].forEach(elm => { elm.disabled = false; });
+    el.signupForm.reset();
+    signupLat = null;
+    signupLon = null;
+    el.signupBackdrop.hidden = false;
+    if (!signupMap) {
+      signupMap = L.map(el.signupMapEl).setView([-31.42, -64.19], 7);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+        maxZoom: 18,
+      }).addTo(signupMap);
+      signupMap.on('click', (ev) => setSignupLocation(ev.latlng.lat, ev.latlng.lng));
+    }
+    if (signupMarker) { signupMap.removeLayer(signupMarker); signupMarker = null; }
+    setTimeout(() => signupMap.invalidateSize(), 50);
+  }
+  function closeSignupModal() { el.signupBackdrop.hidden = true; }
+  el.openSignupBtn.addEventListener('click', () => { closePopover(); openSignupModal(); });
+  el.signupClose.addEventListener('click', closeSignupModal);
+  el.signupBackdrop.addEventListener('click', (ev) => { if (ev.target === el.signupBackdrop) closeSignupModal(); });
+
+  function setSignupLocation(lat, lon) {
+    signupLat = lat;
+    signupLon = lon;
+    if (!signupMarker) {
+      signupMarker = L.marker([lat, lon], { draggable: true }).addTo(signupMap);
+      signupMarker.on('dragend', () => {
+        const pos = signupMarker.getLatLng();
+        setSignupLocation(pos.lat, pos.lng);
+      });
+    } else {
+      signupMarker.setLatLng([lat, lon]);
+    }
+    signupMap.setView([lat, lon], Math.max(signupMap.getZoom(), 11));
+    reverseGeocode(lat, lon);
+  }
+
+  let reverseGeocodeTimer = null;
+  function reverseGeocode(lat, lon) {
+    clearTimeout(reverseGeocodeTimer);
+    reverseGeocodeTimer = setTimeout(async () => {
+      try {
+        const res = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + lat + '&lon=' + lon + '&zoom=12&accept-language=es');
+        const data = await res.json();
+        const a = data.address || {};
+        const city = a.city || a.town || a.village || a.municipality || a.county || '';
+        const state = a.state || '';
+        const cc = a.country_code ? a.country_code.toUpperCase() : '';
+        const label = [city, state].filter(Boolean).join(', ') + (cc ? ', ' + cc : '');
+        if (label.trim().length > 2) el.sLocationLabel.value = label;
+      } catch (e) { /* el usuario puede escribirla a mano */ }
+    }, 400);
+  }
+
+  el.useGeoBtn.addEventListener('click', () => {
+    if (!navigator.geolocation) { alert('Tu navegador no soporta geolocalización.'); return; }
+    el.useGeoBtn.disabled = true;
+    el.useGeoBtn.textContent = 'Buscando ubicación…';
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        el.useGeoBtn.disabled = false;
+        el.useGeoBtn.textContent = '📍 Usar mi ubicación actual';
+        setSignupLocation(pos.coords.latitude, pos.coords.longitude);
+      },
+      () => {
+        el.useGeoBtn.disabled = false;
+        el.useGeoBtn.textContent = '📍 Usar mi ubicación actual';
+        alert('No se pudo obtener tu ubicación. Marcá el punto en el mapa.');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  });
+
+  el.signupForm.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    el.signupError.classList.remove('show');
+    if (signupLat === null || signupLon === null) {
+      el.signupError.textContent = 'Marcá tu ubicación en el mapa o usá el botón de geolocalización.';
+      el.signupError.classList.add('show');
+      return;
+    }
+    el.signupSubmitBtn.disabled = true;
+    const { error } = await client.auth.signUp({
+      email: el.sEmail.value.trim(),
+      password: el.sPassword.value,
+      options: {
+        emailRedirectTo: window.location.href.split('#')[0].split('?')[0],
+        data: {
+          display_name: el.sName.value.trim(),
+          location_label: el.sLocationLabel.value.trim(),
+          lat: signupLat,
+          lon: signupLon,
+        },
+      },
+    });
+    el.signupSubmitBtn.disabled = false;
+    if (error) {
+      el.signupError.textContent = /already/i.test(error.message) ? 'Ese email ya tiene una cuenta.' : 'No se pudo crear la cuenta. Probá de nuevo.';
+      el.signupError.classList.add('show');
+      return;
+    }
+    el.signupSuccess.classList.add('show');
+    [...el.signupForm.elements].forEach(elm => { elm.disabled = true; });
+  });
+
   // ---------- Data ----------
   async function fetchEntries() {
+    if (!selectedUserId) return;
     const { data, error } = await client
       .from('rain_entries')
       .select('date, mm, note')
+      .eq('user_id', selectedUserId)
       .order('date', { ascending: false })
       .limit(2000);
     if (error) {
@@ -988,7 +1168,7 @@
     .subscribe();
 
   render();
-  fetchEntries();
+  fetchProfiles();
   fetchDamLevels();
   fetchDamHistory();
 })();
