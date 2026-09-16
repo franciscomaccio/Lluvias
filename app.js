@@ -793,20 +793,29 @@
 
   // ---------- Dam levels ----------
   function damTankSvg(pct, uid) {
-    const W = 64, H = 120, r = 16;
+    // Cross-section de una cuenca (valle) reteniendo agua: borde superior
+    // ancho = cota vertedero, base angosta y redondeada = fondo del embalse.
+    const W = 64, H = 128;
+    const top = 4, innerBottom = 118, innerH = innerBottom - top;
     const clamped = Math.max(0, Math.min(100, pct));
-    const innerH = H - 2;
-    const fillH = clamped / 100 * innerH;
-    const fillY = H - 1 - fillH;
+    const fillY = innerBottom - (clamped / 100) * innerH;
     const gradId = 'tankGrad' + uid;
     const clipId = 'tankClip' + uid;
+    const basin = 'M5,' + top + ' L59,' + top + ' L46,112 Q32,124 18,112 L5,' + top + ' Z';
+    const amp = 2.6;
+    const wave = 'M0,' + fillY.toFixed(1) +
+      ' C16,' + (fillY - amp).toFixed(1) + ' 16,' + (fillY + amp).toFixed(1) + ' 32,' + fillY.toFixed(1) +
+      ' C48,' + (fillY - amp).toFixed(1) + ' 48,' + (fillY + amp).toFixed(1) + ' 64,' + fillY.toFixed(1) +
+      ' L64,' + H + ' L0,' + H + ' Z';
+    const textY = Math.min(Math.max(fillY + 16, 42), 108);
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" class="tank-svg" role="img" aria-label="Nivel al ' + Math.round(clamped) + '%">' +
       '<defs><linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0%" stop-color="var(--accent-2)"/><stop offset="100%" stop-color="var(--accent)"/>' +
-      '</linearGradient><clipPath id="' + clipId + '"><rect x="1" y="1" width="' + (W - 2) + '" height="' + innerH + '" rx="' + r + '"/></clipPath></defs>' +
-      '<rect x="1" y="1" width="' + (W - 2) + '" height="' + innerH + '" rx="' + r + '" fill="var(--surface-2)" stroke="var(--line)" stroke-width="1.5"></rect>' +
-      '<g clip-path="url(#' + clipId + ')"><rect x="0" y="' + fillY.toFixed(1) + '" width="' + W + '" height="' + (fillH + 2).toFixed(1) + '" fill="url(#' + gradId + ')"></rect></g>' +
-      '<text x="' + (W / 2) + '" y="88" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff" font-family="var(--font-mono)">' + Math.round(clamped) + '%</text>' +
+      '<stop offset="0%" stop-color="var(--accent-2)"/><stop offset="55%" stop-color="var(--accent)"/><stop offset="100%" stop-color="var(--accent-deep)"/>' +
+      '</linearGradient><clipPath id="' + clipId + '"><path d="' + basin + '"/></clipPath></defs>' +
+      '<path d="' + basin + '" fill="var(--surface-2)" stroke="var(--line)" stroke-width="1.5"></path>' +
+      '<g clip-path="url(#' + clipId + ')"><path d="' + wave + '" fill="url(#' + gradId + ')"></path></g>' +
+      '<path d="' + basin + '" fill="none" stroke="var(--line)" stroke-width="1.5"></path>' +
+      '<text x="' + (W / 2) + '" y="' + textY.toFixed(1) + '" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff" font-family="var(--font-mono)">' + Math.round(clamped) + '%</text>' +
       '</svg>';
   }
 
