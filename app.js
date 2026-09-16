@@ -8,6 +8,7 @@
   const WEATHER_TZ = 'America/Argentina/Cordoba';
 
   const YEAR_COLORS = ['#2f6f9e', '#c2703d', '#4f8f5b', '#8a4f9e', '#a4453a', '#3d8f95'];
+  const DAM_ORDER = ['San Roque', 'La Viña', 'Cruz del Eje', 'Los Molinos', 'Emb. Río III', 'La Quebrada', 'Pichanas', 'Dique El Cajón'];
   const MONTH_STARTS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
 
   const QUOTES = [
@@ -39,6 +40,9 @@
   }
   function fmtMm(n) {
     return (Math.round(n * 10) / 10).toLocaleString('es-AR', { minimumFractionDigits: n % 1 === 0 ? 0 : 1, maximumFractionDigits: 1 });
+  }
+  function fmtNum2(n) {
+    return Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
   function escapeHtml(s) {
     const d = document.createElement('div');
@@ -154,6 +158,9 @@
     historyYear: document.getElementById('history-year'),
     historyBody: document.getElementById('history-body'),
     emptyHistory: document.getElementById('empty-history'),
+
+    damsBody: document.getElementById('dams-body'),
+    damsUpdated: document.getElementById('dams-updated'),
 
     totalsBody: document.getElementById('totals-body'),
     cumulativeLegend: document.getElementById('cumulative-legend'),
@@ -746,6 +753,38 @@
     .on('postgres_changes', { event: '*', schema: 'public', table: 'rain_entries' }, fetchEntries)
     .subscribe();
 
+  // ---------- Dam levels ----------
+  async function fetchDamLevels() {
+    const { data, error } = await client
+      .from('dam_levels')
+      .select('date, dam_name, spillway_level, current_level, diff')
+      .order('date', { ascending: false })
+      .limit(64);
+    if (error || !data || data.length === 0) {
+      el.damsBody.innerHTML = '<tr><td colspan="4">Sin datos todavía.</td></tr>';
+      el.damsUpdated.textContent = '';
+      return;
+    }
+    const latestDate = data[0].date;
+    const rows = data.filter(r => r.date === latestDate);
+    rows.sort((a, b) => {
+      const ia = DAM_ORDER.indexOf(a.dam_name), ib = DAM_ORDER.indexOf(b.dam_name);
+      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+    });
+    el.damsUpdated.textContent = 'Actualizado: ' + formatShort(latestDate);
+    el.damsBody.innerHTML = rows.map(r => {
+      const diffClass = r.diff >= 0 ? 'diff-up' : 'diff-down';
+      const sign = r.diff > 0 ? '+' : '';
+      return '<tr><td>' + escapeHtml(r.dam_name) + '</td><td class="num">' + fmtNum2(r.spillway_level) +
+        '</td><td class="num">' + fmtNum2(r.current_level) + '</td><td class="num ' + diffClass + '">' + sign + fmtNum2(r.diff) + '</td></tr>';
+    }).join('');
+  }
+  client
+    .channel('dam_levels_changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'dam_levels' }, fetchDamLevels)
+    .subscribe();
+
   render();
   fetchEntries();
+  fetchDamLevels();
 })();
