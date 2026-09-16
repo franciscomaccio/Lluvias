@@ -9,7 +9,9 @@ El proyecto **Lluvias** ya está creado en tu organización de Supabase
 (región São Paulo, plan free) y la tabla `rain_entries` ya tiene aplicado
 el esquema de [`supabase/schema.sql`](supabase/schema.sql): lectura
 pública, escritura solo para usuarios autenticados. `config.js` en este
-repo (no subido a git) ya tiene la URL y la anon key de ese proyecto.
+repo ya tiene la URL y la anon key de ese proyecto. La anon key es segura
+para publicar: solo sirve para leer/escribir a través de las políticas de
+RLS del paso anterior, no da acceso administrativo.
 
 Te falta un solo paso manual, porque requiere tu contraseña y no puede
 hacerse desde acá:
@@ -56,10 +58,9 @@ navegador.
   Supabase y se actualizan en tiempo real si tenés la página abierta en más
   de un dispositivo.
 
-## Publicar la web
+## Publicada online
 
-Este proyecto es HTML/CSS/JS estático: se puede publicar en GitHub Pages,
-Netlify, Vercel o cualquier hosting estático. Solo asegurate de subir
-también un `config.js` con tus credenciales de Supabase en el servidor
-(no lo sube git, así que lo tenés que crear ahí a mano o mediante variables
-de entorno del hosting que armen ese archivo al build).
+El sitio está publicado con GitHub Pages en
+**https://franciscomaccio.github.io/Lluvias/**, servido directo desde la
+rama `master`. Cualquier push a `master` (o el merge de un PR) actualiza
+el sitio en un par de minutos.

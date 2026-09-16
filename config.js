@@ -1,0 +1,2 @@
+const SUPABASE_URL = 'https://boquitxppvmiiwricnvz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvcXVpdHhwcHZtaWl3cmljbnZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1MTYwMzksImV4cCI6MjEwNTA5MjAzOX0.cb5JHJNOSmvnLotPEPs1QEk0R6ykbpa9KEBlUTGIXbU';
