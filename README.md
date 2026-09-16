@@ -1,37 +1,34 @@
-# Pluviómetro
+# Lluvias
 
 Registro personal de mm de lluvia, con el historial público y la carga de
 registros protegida con login (Supabase Auth).
 
-## 1. Crear el proyecto en Supabase
+## 1. Proyecto en Supabase (ya creado)
 
-1. Entrá a [supabase.com](https://supabase.com), creá una cuenta si no tenés,
-   y creá un proyecto nuevo (plan free).
-2. Andá a **SQL Editor** > **New query**, pegá el contenido de
-   [`supabase/schema.sql`](supabase/schema.sql) y ejecutalo. Esto crea la
-   tabla `rain_entries` con lectura pública y escritura solo para usuarios
-   autenticados.
-3. Andá a **Authentication > Providers** y confirmá que **Email** esté
-   habilitado (viene activado por defecto).
-4. Andá a **Authentication > Settings** y desactivá **"Allow new users to
-   sign up"** (o equivalente según la versión del dashboard). Esta app no
-   tiene pantalla de registro a propósito: la idea es que exista un único
-   usuario, vos.
-5. Andá a **Authentication > Users** > **Add user** y create tu propio
-   usuario (tu email + una contraseña). Ese va a ser tu login.
-6. Andá a **Project Settings > API** y copiá:
-   - **Project URL**
-   - **anon public key**
+El proyecto **Lluvias** ya está creado en tu organización de Supabase
+(región São Paulo, plan free) y la tabla `rain_entries` ya tiene aplicado
+el esquema de [`supabase/schema.sql`](supabase/schema.sql): lectura
+pública, escritura solo para usuarios autenticados. `config.js` en este
+repo (no subido a git) ya tiene la URL y la anon key de ese proyecto.
+
+Te falta un solo paso manual, porque requiere tu contraseña y no puede
+hacerse desde acá:
+
+1. Entrá al [dashboard de Supabase](https://supabase.com/dashboard),
+   proyecto **Lluvias**.
+2. Andá a **Authentication > Users** > **Add user** y creá tu propio
+   usuario (tu email + una contraseña). Ese va a ser tu login para cargar
+   registros.
+3. Opcional pero recomendado: en **Authentication > Settings**, desactivá
+   **"Allow new users to sign up"**. Esta app no tiene pantalla de
+   registro a propósito: la idea es que exista un único usuario, vos.
 
 ## 2. Configurar el proyecto local
 
-```bash
-cp config.example.js config.js
-```
-
-Abrí `config.js` y pegá la URL y la clave anónima que copiaste en el paso
-anterior. Este archivo no se sube a git (está en `.gitignore`) porque es
-específico de tu proyecto de Supabase.
+`config.js` ya está creado con la URL y la anon key del proyecto. Si
+alguna vez necesitás recrearlo (por ejemplo en otra máquina), copiá
+`config.example.js` a `config.js` y completá los valores desde
+**Project Settings > API** en el dashboard de Supabase.
 
 ## 3. Correrlo localmente
 
@@ -53,7 +50,7 @@ navegador.
 - **Historial, gráfico mensual y estadísticas**: visibles para cualquiera
   que abra la página, sin login.
 - **Cargar, editar o eliminar un registro**: requiere iniciar sesión con el
-  usuario que creaste en el paso 1.5. Sin sesión iniciada, la app solo
+  usuario que creaste en el paso 1. Sin sesión iniciada, la app solo
   muestra el formulario de login.
 - Los datos se guardan en la tabla `rain_entries` de tu proyecto de
   Supabase y se actualizan en tiempo real si tenés la página abierta en más
