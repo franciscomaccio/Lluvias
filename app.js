@@ -162,6 +162,11 @@
     damsUpdated: document.getElementById('dams-updated'),
     damTanksGrid: document.getElementById('dam-tanks-grid'),
 
+    damSelect: document.getElementById('dam-select'),
+    damHistoryYear: document.getElementById('dam-history-year'),
+    damPeriodToggle: document.getElementById('dam-period-toggle'),
+    damHistoryChartWrap: document.getElementById('dam-history-chart-wrap'),
+
     totalsBody: document.getElementById('totals-body'),
     cumulativeLegend: document.getElementById('cumulative-legend'),
     cumulativeChartWrap: document.getElementById('cumulative-chart-wrap'),
@@ -808,12 +813,141 @@
     el.damsUpdated.textContent = 'Actualizado: ' + formatShort(latestDate);
     renderDamTanks(rows);
   }
+
+  // ---------- Dam level history (evolución de niveles) ----------
+  let damHistoryData = [];
+  let damHistorySelectedDam = DAM_ORDER[0];
+  let damHistorySelectedYear = null;
+  let damHistoryPeriod = 'day';
+
+  function populateDamHistoryFilters() {
+    if (!el.damSelect.options.length) {
+      el.damSelect.innerHTML = DAM_ORDER.map(d => '<option value="' + escapeHtml(d) + '">' + escapeHtml(d) + '</option>').join('');
+      damHistorySelectedDam = DAM_ORDER[0];
+    }
+    const years = Array.from(new Set(damHistoryData.map(r => r.date.slice(0, 4)))).sort((a, b) => b.localeCompare(a));
+    const prevYear = damHistorySelectedYear;
+    el.damHistoryYear.innerHTML = years.map(y => '<option value="' + y + '">' + y + '</option>').join('');
+    if (prevYear && years.includes(prevYear)) {
+      damHistorySelectedYear = prevYear;
+    } else {
+      damHistorySelectedYear = years[0] || String(new Date().getFullYear());
+    }
+    el.damHistoryYear.value = damHistorySelectedYear;
+  }
+
+  function renderDamHistoryChart() {
+    const dam = damHistorySelectedDam;
+    const year = damHistorySelectedYear;
+    const rows = damHistoryData.filter(r => r.dam_name === dam && r.date.startsWith(year + '-') && r.diff !== null);
+    if (rows.length === 0) {
+      el.damHistoryChartWrap.innerHTML = '<div class="chart-empty">Sin datos de ' + escapeHtml(dam) + ' en ' + year + '.</div>';
+      return;
+    }
+
+    let points;
+    if (damHistoryPeriod === 'day') {
+      points = rows.map(r => ({ x: dayOfYear(r.date), v: r.diff })).sort((a, b) => a.x - b.x);
+    } else {
+      const byMonth = {};
+      rows.forEach(r => {
+        const m = Number(r.date.slice(5, 7)) - 1;
+        (byMonth[m] = byMonth[m] || []).push(r.diff);
+      });
+      points = Object.keys(byMonth).map(m => {
+        const vals = byMonth[m];
+        return { x: Number(m), v: vals.reduce((a, b) => a + b, 0) / vals.length };
+      }).sort((a, b) => a.x - b.x);
+    }
+
+    const vals = points.map(p => p.v);
+    const dataMin = Math.min(...vals, 0);
+    const dataMax = Math.max(...vals, 0);
+    const step = niceStep(Math.max(dataMax - dataMin, 1) / 4);
+    const axisMin = Math.floor(dataMin / step) * step;
+    const axisMax = Math.ceil(dataMax / step) * step;
+
+    const W = 640, H = 240, padL = 42, padR = 10, padT = 14, padB = 26;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+    const yForVal = v => padT + (axisMax - v) / (axisMax - axisMin) * plotH;
+    const xForPoint = damHistoryPeriod === 'day'
+      ? (x => padL + (x - 1) / 365 * plotW)
+      : (x => padL + (x + 0.5) / 12 * plotW);
+
+    let grid = '';
+    const gridCount = Math.round((axisMax - axisMin) / step);
+    for (let i = 0; i <= gridCount; i++) {
+      const v = axisMin + step * i;
+      const y = yForVal(v);
+      const isZero = Math.abs(v) < 1e-9;
+      grid += '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y.toFixed(1) + '" stroke="' + (isZero ? 'var(--accent)' : 'var(--line)') + '" stroke-width="' + (isZero ? 1.6 : 1) + '"></line>';
+      grid += '<text x="' + (padL - 8) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="end" font-size="9" font-family="var(--font-mono)" fill="var(--ink-soft)">' + fmtMm(v) + '</text>';
+    }
+
+    let xLabels = '';
+    if (damHistoryPeriod === 'day') {
+      MONTH_STARTS.filter((_, i) => i % 2 === 0).forEach(doy => {
+        const x = xForPoint(doy);
+        const idx = MONTH_STARTS.indexOf(doy);
+        xLabels += '<text x="' + x.toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="9" font-family="var(--font-body)" fill="var(--ink-soft)">' + MONTHS[idx] + '</text>';
+      });
+    } else {
+      MONTHS.forEach((m, i) => {
+        const x = xForPoint(i);
+        xLabels += '<text x="' + x.toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="9" font-family="var(--font-body)" fill="var(--ink-soft)">' + m + '</text>';
+      });
+    }
+
+    const linePath = points.map((p, i) => (i === 0 ? 'M' : 'L') + xForPoint(p.x).toFixed(1) + ' ' + yForVal(p.v).toFixed(1)).join(' ');
+    const dots = points.map(p =>
+      '<circle cx="' + xForPoint(p.x).toFixed(1) + '" cy="' + yForVal(p.v).toFixed(1) + '" r="3" fill="var(--accent)"><title>' + fmtMm(p.v) + ' m</title></circle>'
+    ).join('');
+
+    el.damHistoryChartWrap.innerHTML = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Evolución de nivel de ' + escapeHtml(dam) + '">' +
+      grid + '<path d="' + linePath + '" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"></path>' + dots + xLabels + '</svg>';
+  }
+
+  async function fetchDamHistory() {
+    const { data, error } = await client
+      .from('dam_levels')
+      .select('date, dam_name, diff')
+      .order('date', { ascending: true })
+      .limit(4000);
+    if (error || !data) {
+      el.damHistoryChartWrap.innerHTML = '<div class="chart-empty">No se pudo cargar el historial.</div>';
+      return;
+    }
+    damHistoryData = data;
+    populateDamHistoryFilters();
+    renderDamHistoryChart();
+  }
+
+  el.damSelect.addEventListener('change', () => {
+    damHistorySelectedDam = el.damSelect.value;
+    renderDamHistoryChart();
+  });
+  el.damHistoryYear.addEventListener('change', () => {
+    damHistorySelectedYear = el.damHistoryYear.value;
+    renderDamHistoryChart();
+  });
+  el.damPeriodToggle.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-period]');
+    if (!btn) return;
+    damHistoryPeriod = btn.getAttribute('data-period');
+    [...el.damPeriodToggle.querySelectorAll('button')].forEach(b => b.classList.toggle('active', b === btn));
+    renderDamHistoryChart();
+  });
+
   client
     .channel('dam_levels_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'dam_levels' }, fetchDamLevels)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'dam_levels' }, () => {
+      fetchDamLevels();
+      fetchDamHistory();
+    })
     .subscribe();
 
   render();
   fetchEntries();
   fetchDamLevels();
+  fetchDamHistory();
 })();

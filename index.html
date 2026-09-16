@@ -171,6 +171,22 @@
     <div class="dams-source">Fuente: <a href="https://www.diquesdecordoba.com.ar/" target="_blank" rel="noopener">diquesdecordoba.com.ar</a> (APRHI Córdoba / Omixon SRL)</div>
   </section>
 
+  <section class="card dam-history-card">
+    <div class="chart-head">
+      <h2>Evolución de niveles</h2>
+      <div class="chart-controls">
+        <select id="dam-select" class="year-select"></select>
+        <select id="dam-history-year" class="year-select"></select>
+        <div class="period-toggle" id="dam-period-toggle">
+          <button type="button" data-period="day" class="active">Día a día</button>
+          <button type="button" data-period="month">Mes a mes</button>
+        </div>
+      </div>
+    </div>
+    <div class="chart-sub" id="dam-history-sub">Diferencia respecto a la cota vertedero (m). La línea en 0 representa el vertedero.</div>
+    <div id="dam-history-chart-wrap"></div>
+  </section>
+
   <div class="grid-bottom">
     <section class="card history-card">
       <div class="chart-head">
