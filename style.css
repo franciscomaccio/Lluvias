@@ -236,6 +236,15 @@ svg { display: block; }
   border-top: 1px solid var(--line);
   padding-top: 12px;
 }
+.weather-next-rain {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  margin-top: 10px;
+}
+.weather-next-rain b { color: var(--ink); font-weight: 600; }
 .weather-sub div { display: flex; align-items: center; gap: 5px; }
 .weather-sub b { color: var(--ink); font-weight: 600; font-family: var(--font-mono); }
 .mini-icon { width: 14px; height: 14px; color: var(--accent); flex-shrink: 0; }

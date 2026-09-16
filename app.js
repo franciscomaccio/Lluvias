@@ -203,16 +203,23 @@
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ---------- Weather ----------
+  const RAIN_FORECAST_MM_THRESHOLD = 1;
+  const WEEKDAYS_LONG = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+
   async function fetchWeather() {
     try {
       const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + WEATHER_LAT + '&longitude=' + WEATHER_LON +
-        '&current=temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_direction_10m,weather_code&timezone=' + encodeURIComponent(WEATHER_TZ);
+        '&current=temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_direction_10m,weather_code' +
+        '&daily=precipitation_probability_max,precipitation_sum&forecast_days=10' +
+        '&timezone=' + encodeURIComponent(WEATHER_TZ);
       const res = await fetch(url);
       if (!res.ok) throw new Error('http ' + res.status);
       const data = await res.json();
       renderWeather(data.current);
+      renderNextRain(data.daily);
     } catch (e) {
       el.weatherCond.textContent = 'No se pudo cargar el clima';
+      document.getElementById('weather-next-rain-text').textContent = 'No se pudo cargar el pronóstico.';
     }
   }
   function renderWeather(c) {
@@ -225,6 +232,31 @@
     el.weatherHum.textContent = Math.round(c.relative_humidity_2m) + '%';
     el.weatherWind.textContent = Math.round(c.wind_speed_10m) + ' km/h (' + compass(c.wind_direction_10m) + ')';
     el.weatherPressure.textContent = Math.round(c.surface_pressure) + ' hPa';
+  }
+  function forecastDayLabel(dateStr) {
+    const today = todayStr();
+    const tomorrow = ymd(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1));
+    if (dateStr === today) return 'Hoy';
+    if (dateStr === tomorrow) return 'Mañana';
+    const d = parseLocal(dateStr);
+    const weekday = WEEKDAYS_LONG[d.getDay()];
+    return weekday.charAt(0).toUpperCase() + weekday.slice(1) + ' ' + formatDM(dateStr);
+  }
+  function renderNextRain(daily) {
+    const textEl = document.getElementById('weather-next-rain-text');
+    if (!daily || !daily.time) { textEl.textContent = 'Pronóstico no disponible.'; return; }
+    let idx = -1;
+    for (let i = 0; i < daily.time.length; i++) {
+      if (daily.precipitation_sum[i] >= RAIN_FORECAST_MM_THRESHOLD) { idx = i; break; }
+    }
+    if (idx === -1) {
+      textEl.innerHTML = 'Sin lluvia a la vista en los próximos ' + daily.time.length + ' días.';
+      return;
+    }
+    const label = forecastDayLabel(daily.time[idx]);
+    const mm = fmtMm(daily.precipitation_sum[idx]);
+    const prob = daily.precipitation_probability_max[idx];
+    textEl.innerHTML = 'Próxima lluvia: <b>' + label + '</b> — ' + mm + ' mm (' + prob + '% prob.)';
   }
   fetchWeather();
   setInterval(fetchWeather, 15 * 60 * 1000);
