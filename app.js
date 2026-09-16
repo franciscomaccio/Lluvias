@@ -668,6 +668,7 @@
 
   function applyAuthState(session) {
     currentSession = session;
+    el.openRegisterBtn.style.display = session ? 'inline-flex' : 'none';
     renderHistory();
   }
   client.auth.getSession().then(({ data }) => applyAuthState(data.session));
