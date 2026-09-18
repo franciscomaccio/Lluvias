@@ -972,7 +972,7 @@
     .subscribe();
 
   // ---------- Dam levels ----------
-  function damTankSvg(pct, uid) {
+  function damTankSvg(pct, uid, currentLevel, damName) {
     // Cross-section de una cuenca (valle) reteniendo agua: borde superior
     // ancho = cota vertedero, base angosta y redondeada = fondo del embalse.
     const W = 64, H = 128;
@@ -988,7 +988,9 @@
       ' C48,' + (fillY - amp).toFixed(1) + ' 48,' + (fillY + amp).toFixed(1) + ' 64,' + fillY.toFixed(1) +
       ' L64,' + H + ' L0,' + H + ' Z';
     const textY = Math.min(Math.max(fillY + 16, 42), 108);
-    return '<svg viewBox="0 0 ' + W + ' ' + H + '" class="tank-svg" role="img" aria-label="Nivel al ' + Math.round(clamped) + '%">' +
+    const tooltip = escapeHtml(damName) + ': cota actual ' + fmtNum2(currentLevel) + ' m (' + Math.round(clamped) + '%)';
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" class="tank-svg" role="img" aria-label="' + tooltip + '">' +
+      '<title>' + tooltip + '</title>' +
       '<defs><linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1">' +
       '<stop offset="0%" stop-color="var(--accent-2)"/><stop offset="55%" stop-color="var(--accent)"/><stop offset="100%" stop-color="var(--accent-deep)"/>' +
       '</linearGradient><clipPath id="' + clipId + '"><path d="' + basin + '"/></clipPath></defs>' +
@@ -1007,7 +1009,7 @@
       return '<div class="dam-tank">' +
         '<div class="dam-tank-name">' + escapeHtml(r.dam_name) + '</div>' +
         '<div class="dam-tank-max">▾ ' + fmtNum2(r.spillway_level) + ' m</div>' +
-        damTankSvg(pct, i) +
+        damTankSvg(pct, i, r.current_level, r.dam_name) +
         '<div class="dam-tank-diff ' + diffClass + '">' + sign + fmtNum2(r.diff) + ' m</div>' +
         '<div class="dam-tank-diff-label">Diferencia</div>' +
         '</div>';
