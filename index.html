@@ -104,15 +104,6 @@
     </div>
 
     <div class="stat">
-      <div class="label">Lluvia este año</div>
-      <div class="stat-icon-row">
-        <svg viewBox="0 0 24 24" class="stat-icon" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="5.5"/><line x1="19" y1="20" x2="19" y2="15"/></svg>
-        <div class="value" id="stat-year">— <span class="unit">mm</span></div>
-      </div>
-      <div class="sub" id="stat-year-sub">&nbsp;</div>
-    </div>
-
-    <div class="stat">
       <div class="label">Última lluvia</div>
       <div class="stat-icon-row">
         <svg viewBox="0 0 24 24" class="stat-icon" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M17.5 19a4.5 4.5 0 0 0-.4-9A5.5 5.5 0 0 0 6.6 8 4.5 4.5 0 0 0 6.5 17H17z"/></svg>
@@ -129,19 +120,56 @@
       </div>
       <div class="sub" id="stat-dry-days-sub">&nbsp;</div>
     </div>
+
+    <div class="stat">
+      <div class="label">Lluvia este año</div>
+      <div class="stat-icon-row">
+        <svg viewBox="0 0 24 24" class="stat-icon" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="5.5"/><line x1="19" y1="20" x2="19" y2="15"/></svg>
+        <div class="value" id="stat-year">— <span class="unit">mm</span></div>
+      </div>
+      <div class="sub" id="stat-year-sub">&nbsp;</div>
+    </div>
+  </section>
+
+  <section class="card quote-card">
+    <svg viewBox="0 0 24 24" class="quote-icon"><path d="M17.5 19a4.5 4.5 0 0 0-.4-9A5.5 5.5 0 0 0 6.6 8 4.5 4.5 0 0 0 6.5 17H17z"/></svg>
+    <p id="quote-text">&nbsp;</p>
   </section>
 
   <div class="grid-mid">
     <section class="card chart-card">
       <div class="chart-head">
-        <h2>Lluvias recientes</h2>
-        <div class="year-nav" id="recent-year-nav">
-          <button type="button" id="recent-year-prev" aria-label="Año anterior">‹</button>
-          <span id="recent-year-label">—</span>
-          <button type="button" id="recent-year-next" aria-label="Año siguiente">›</button>
+        <h2>Totales mensuales</h2>
+        <div class="chart-controls">
+          <div class="year-nav" id="recent-year-nav">
+            <button type="button" id="recent-year-prev" aria-label="Año anterior">‹</button>
+            <span id="recent-year-label">—</span>
+            <button type="button" id="recent-year-next" aria-label="Año siguiente">›</button>
+          </div>
+          <div class="period-toggle" id="totals-tabs">
+            <button type="button" data-tab="monthly" class="active">Mensual</button>
+            <button type="button" data-tab="yearly">Por año</button>
+          </div>
         </div>
       </div>
-      <div id="recent-chart-wrap"></div>
+
+      <div id="totals-tab-monthly">
+        <div id="recent-chart-wrap"></div>
+      </div>
+
+      <div id="totals-tab-yearly" hidden>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Año</th>
+              <th class="num">Total (mm)</th>
+              <th class="num">Días con lluvia</th>
+              <th class="num">Máxima en un día</th>
+            </tr>
+          </thead>
+          <tbody id="totals-body"></tbody>
+        </table>
+      </div>
     </section>
 
     <section class="card calendar-card">
@@ -202,11 +230,6 @@
     </section>
 
     <div class="side-stack">
-      <section class="card quote-card">
-        <svg viewBox="0 0 24 24" class="quote-icon"><path d="M17.5 19a4.5 4.5 0 0 0-.4-9A5.5 5.5 0 0 0 6.6 8 4.5 4.5 0 0 0 6.5 17H17z"/></svg>
-        <p id="quote-text">&nbsp;</p>
-      </section>
-
       <section class="card summary-card">
         <h2>Resumen</h2>
         <div class="summary-row">
@@ -233,21 +256,6 @@
       </section>
     </div>
   </div>
-
-  <section class="card totals-card">
-    <h2>Totales por año</h2>
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Año</th>
-          <th class="num">Total (mm)</th>
-          <th class="num">Días con lluvia</th>
-          <th class="num">Máxima en un día</th>
-        </tr>
-      </thead>
-      <tbody id="totals-body"></tbody>
-    </table>
-  </section>
 
   <section class="card dams-card">
     <div class="chart-head">

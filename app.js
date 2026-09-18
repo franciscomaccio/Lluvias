@@ -165,6 +165,9 @@
     recentYearPrev: document.getElementById('recent-year-prev'),
     recentYearNext: document.getElementById('recent-year-next'),
     recentYearLabel: document.getElementById('recent-year-label'),
+    totalsTabs: document.getElementById('totals-tabs'),
+    totalsTabMonthly: document.getElementById('totals-tab-monthly'),
+    totalsTabYearly: document.getElementById('totals-tab-yearly'),
 
     calTitle: document.getElementById('calendar-title'),
     calPrev: document.getElementById('cal-prev'),
@@ -401,7 +404,7 @@
     const step = niceStep(rawMax / 5);
     const maxVal = Math.ceil(rawMax / step) * step;
     const gridCount = Math.round(maxVal / step);
-    const W = 640, H = 260, padL = 42, padR = 10, padT = 14, padB = 26;
+    const W = 640, H = 380, padL = 42, padR = 10, padT = 14, padB = 26;
     const plotW = W - padL - padR, plotH = H - padT - padB;
     const xForDoy = doy => padL + (doy - 1) / 365 * plotW;
     const yForVal = v => padT + plotH - (v / maxVal) * plotH;
@@ -1057,7 +1060,8 @@
     const axisMin = Math.floor(dataMin / step) * step;
     const axisMax = Math.ceil(dataMax / step) * step;
 
-    const W = 640, H = 240, padL = 42, padR = 10, padT = 14, padB = 26;
+    const isMobile = window.innerWidth < 640;
+    const W = 640, H = isMobile ? 380 : 240, padL = 42, padR = 10, padT = 14, padB = 26;
     const plotW = W - padL - padR, plotH = H - padT - padB;
     const yForVal = v => padT + (axisMax - v) / (axisMax - axisMin) * plotH;
     const xForPoint = damHistoryPeriod === 'day'
@@ -1142,6 +1146,16 @@
     el.historyTabCumulative.hidden = tab !== 'cumulative';
   });
 
+  el.totalsTabs.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-tab]');
+    if (!btn) return;
+    const tab = btn.getAttribute('data-tab');
+    [...el.totalsTabs.querySelectorAll('button')].forEach(b => b.classList.toggle('active', b === btn));
+    el.totalsTabMonthly.hidden = tab !== 'monthly';
+    el.totalsTabYearly.hidden = tab !== 'yearly';
+    el.recentYearNav.hidden = tab !== 'monthly';
+  });
+
   el.damsTabs.addEventListener('click', (ev) => {
     const btn = ev.target.closest('button[data-tab]');
     if (!btn) return;
@@ -1149,6 +1163,14 @@
     [...el.damsTabs.querySelectorAll('button')].forEach(b => b.classList.toggle('active', b === btn));
     el.damsTabLevels.hidden = tab !== 'levels';
     el.damsTabHistory.hidden = tab !== 'history';
+  });
+
+  let damHistoryResizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(damHistoryResizeTimer);
+    damHistoryResizeTimer = setTimeout(() => {
+      if (!el.damsTabHistory.hidden) renderDamHistoryChart();
+    }, 200);
   });
 
   client

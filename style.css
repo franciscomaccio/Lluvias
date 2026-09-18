@@ -510,7 +510,7 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
 .row-menu button.danger { color: var(--danger); }
 
 /* Dam levels */
-.dams-card, .dam-history-card, .totals-card { margin-bottom: 16px; }
+.dams-card, .dam-history-card, .totals-card, .quote-card { margin-bottom: 16px; }
 .dams-updated { font-size: 0.78rem; color: var(--ink-soft); }
 .dams-updated-row { text-align: right; margin-bottom: 12px; }
 .dam-history-controls { margin-bottom: 16px; }
@@ -574,8 +574,6 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
 .dam-tanks-legend span { display: flex; align-items: center; gap: 5px; }
 .dot.tank-dot { background: var(--accent); }
 
-/* Yearly comparison */
-.totals-card h2 { margin-bottom: 16px; }
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th {
   text-align: left;
