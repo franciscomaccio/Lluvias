@@ -202,7 +202,7 @@
   let entriesByDate = {};
   let loaded = false;
   let editingDate = null;
-  let recentPeriod = '7';
+  let recentPeriod = 'year';
   let chartYear = new Date().getFullYear();
   let calYear = new Date().getFullYear();
   let calMonth = new Date().getMonth();
