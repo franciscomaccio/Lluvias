@@ -317,14 +317,8 @@ svg { display: block; }
   margin-bottom: 16px;
   align-items: start;
 }
-.grid-bottom {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  gap: 16px;
-  align-items: start;
-}
 @media (max-width: 900px) {
-  .grid-mid, .grid-bottom { grid-template-columns: 1fr; }
+  .grid-mid { grid-template-columns: 1fr; }
 }
 
 .chart-controls {
@@ -510,7 +504,7 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
 .row-menu button.danger { color: var(--danger); }
 
 /* Dam levels */
-.dams-card, .dam-history-card, .totals-card, .quote-card { margin-bottom: 16px; }
+.dams-card, .dam-history-card, .totals-card, .quote-card, .history-card { margin-bottom: 16px; }
 .dams-updated { font-size: 0.78rem; color: var(--ink-soft); }
 .dams-updated-row { text-align: right; margin-bottom: 12px; }
 .dam-history-controls { margin-bottom: 16px; }
@@ -625,7 +619,6 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
 }
 
 /* Side stack */
-.side-stack { display: flex; flex-direction: column; gap: 16px; }
 .quote-card {
   background: color-mix(in srgb, var(--accent) 10%, var(--surface));
   display: flex;
@@ -642,31 +635,6 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
   margin: 0;
   color: var(--ink);
 }
-.summary-card h2 { margin-bottom: 14px; }
-.summary-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 0;
-  border-top: 1px solid var(--line);
-}
-.summary-row:first-of-type { border-top: none; padding-top: 0; }
-.summary-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: var(--ink-soft);
-}
-.summary-value {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  color: var(--ink);
-  white-space: nowrap;
-}
-
 /* Forms (shared: modal + popover) */
 form .field { margin-bottom: 14px; }
 form label {

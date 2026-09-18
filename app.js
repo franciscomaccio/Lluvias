@@ -197,9 +197,6 @@
     cumulativeChartWrap: document.getElementById('cumulative-chart-wrap'),
 
     quoteText: document.getElementById('quote-text'),
-    summaryDays: document.getElementById('summary-days'),
-    summaryMax: document.getElementById('summary-max'),
-    summaryAvg: document.getElementById('summary-avg'),
   };
 
   let entries = [];
@@ -342,7 +339,6 @@
     renderCalendar();
     renderHistoryYearOptions();
     renderHistory();
-    renderSummary();
     renderYearlyTable();
     renderCumulativeChart();
   }
@@ -672,24 +668,6 @@
     }
   });
 
-  function renderSummary() {
-    if (!loaded) return;
-    const nowD = new Date();
-    const y = nowD.getFullYear(), m = nowD.getMonth(), dom = nowD.getDate();
-    const curMonthKey = y + '-' + String(m + 1).padStart(2, '0');
-    const monthEntries = entries.filter(e => e.date.startsWith(curMonthKey));
-    const rainyDays = monthEntries.filter(e => e.mm > 0).length;
-    el.summaryDays.textContent = rainyDays + (rainyDays === 1 ? ' día' : ' días');
-    if (monthEntries.length === 0) {
-      el.summaryMax.textContent = '—';
-      el.summaryAvg.textContent = '0 mm';
-      return;
-    }
-    const maxEntry = monthEntries.reduce((a, b) => (b.mm > a.mm ? b : a));
-    el.summaryMax.textContent = fmtMm(maxEntry.mm) + ' mm (' + formatDM(maxEntry.date) + ')';
-    const monthTotal = monthEntries.reduce((s, e) => s + e.mm, 0);
-    el.summaryAvg.textContent = fmtMm(monthTotal / dom) + ' mm';
-  }
 
   // ---------- Avatar popover ----------
   function openPopover() {
