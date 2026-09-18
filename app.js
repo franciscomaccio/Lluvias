@@ -171,6 +171,9 @@
     calGrid: document.getElementById('cal-grid'),
 
     historyYear: document.getElementById('history-year'),
+    historyTabs: document.getElementById('history-tabs'),
+    historyTabRecords: document.getElementById('history-tab-records'),
+    historyTabCumulative: document.getElementById('history-tab-cumulative'),
     historyBody: document.getElementById('history-body'),
     emptyHistory: document.getElementById('empty-history'),
 
@@ -181,6 +184,9 @@
     damHistoryYear: document.getElementById('dam-history-year'),
     damPeriodToggle: document.getElementById('dam-period-toggle'),
     damHistoryChartWrap: document.getElementById('dam-history-chart-wrap'),
+    damsTabs: document.getElementById('dams-tabs'),
+    damsTabLevels: document.getElementById('dams-tab-levels'),
+    damsTabHistory: document.getElementById('dams-tab-history'),
 
     totalsBody: document.getElementById('totals-body'),
     cumulativeLegend: document.getElementById('cumulative-legend'),
@@ -1070,7 +1076,7 @@
 
     let points;
     if (damHistoryPeriod === 'day') {
-      points = rows.map(r => ({ x: dayOfYear(r.date), v: r.diff })).sort((a, b) => a.x - b.x);
+      points = rows.map(r => ({ x: dayOfYear(r.date), v: r.diff, label: formatShort(r.date) })).sort((a, b) => a.x - b.x);
     } else {
       const byMonth = {};
       rows.forEach(r => {
@@ -1079,7 +1085,8 @@
       });
       points = Object.keys(byMonth).map(m => {
         const vals = byMonth[m];
-        return { x: Number(m), v: vals.reduce((a, b) => a + b, 0) / vals.length };
+        const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+        return { x: Number(m), v: avg, label: MONTHS_LONG[Number(m)] + ' ' + year + ' (prom.)' };
       }).sort((a, b) => a.x - b.x);
     }
 
@@ -1122,9 +1129,14 @@
     }
 
     const linePath = points.map((p, i) => (i === 0 ? 'M' : 'L') + xForPoint(p.x).toFixed(1) + ' ' + yForVal(p.v).toFixed(1)).join(' ');
-    const dots = points.map(p =>
-      '<circle cx="' + xForPoint(p.x).toFixed(1) + '" cy="' + yForVal(p.v).toFixed(1) + '" r="3" fill="var(--accent)"><title>' + fmtMm(p.v) + ' m</title></circle>'
-    ).join('');
+    const dots = points.map(p => {
+      const cx = xForPoint(p.x).toFixed(1), cy = yForVal(p.v).toFixed(1);
+      const tooltip = p.label + ': ' + fmtMm(p.v) + ' m';
+      return '<g>' +
+        '<circle cx="' + cx + '" cy="' + cy + '" r="7" fill="transparent"><title>' + escapeHtml(tooltip) + '</title></circle>' +
+        '<circle cx="' + cx + '" cy="' + cy + '" r="3" fill="var(--accent)" pointer-events="none"></circle>' +
+      '</g>';
+    }).join('');
 
     el.damHistoryChartWrap.innerHTML = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Evolución de nivel de ' + escapeHtml(dam) + '">' +
       grid + '<path d="' + linePath + '" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"></path>' + dots + xLabels + '</svg>';
@@ -1159,6 +1171,24 @@
     damHistoryPeriod = btn.getAttribute('data-period');
     [...el.damPeriodToggle.querySelectorAll('button')].forEach(b => b.classList.toggle('active', b === btn));
     renderDamHistoryChart();
+  });
+
+  el.historyTabs.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-tab]');
+    if (!btn) return;
+    const tab = btn.getAttribute('data-tab');
+    [...el.historyTabs.querySelectorAll('button')].forEach(b => b.classList.toggle('active', b === btn));
+    el.historyTabRecords.hidden = tab !== 'records';
+    el.historyTabCumulative.hidden = tab !== 'cumulative';
+  });
+
+  el.damsTabs.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-tab]');
+    if (!btn) return;
+    const tab = btn.getAttribute('data-tab');
+    [...el.damsTabs.querySelectorAll('button')].forEach(b => b.classList.toggle('active', b === btn));
+    el.damsTabLevels.hidden = tab !== 'levels';
+    el.damsTabHistory.hidden = tab !== 'history';
   });
 
   client

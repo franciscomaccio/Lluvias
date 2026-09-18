@@ -510,8 +510,11 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
 .row-menu button.danger { color: var(--danger); }
 
 /* Dam levels */
-.dams-card, .dam-history-card { margin-bottom: 16px; }
+.dams-card, .dam-history-card, .totals-card { margin-bottom: 16px; }
 .dams-updated { font-size: 0.78rem; color: var(--ink-soft); }
+.dams-updated-row { text-align: right; margin-bottom: 12px; }
+.dam-history-controls { margin-bottom: 16px; }
+.history-year-row { text-align: right; margin-bottom: 12px; }
 .data-table td.num.diff-up { color: var(--success); }
 .data-table td.num.diff-down { color: var(--danger); }
 .dams-source {
@@ -572,17 +575,7 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
 .dot.tank-dot { background: var(--accent); }
 
 /* Yearly comparison */
-.grid-yearly {
-  display: grid;
-  grid-template-columns: 1fr 1.6fr;
-  gap: 16px;
-  margin-top: 16px;
-  align-items: start;
-}
-@media (max-width: 900px) {
-  .grid-yearly { grid-template-columns: 1fr; }
-}
-.totals-card h2, .cumulative-card h2 { margin-bottom: 16px; }
+.totals-card h2 { margin-bottom: 16px; }
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th {
   text-align: left;
