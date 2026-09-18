@@ -104,15 +104,6 @@
     </div>
 
     <div class="stat">
-      <div class="label">Lluvia este mes</div>
-      <div class="stat-icon-row">
-        <svg viewBox="0 0 24 24" class="stat-icon" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.2" y="5" width="17.6" height="15.5" rx="2"/><line x1="3.2" y1="9.3" x2="20.8" y2="9.3"/><line x1="8" y1="3" x2="8" y2="7" stroke-linecap="round"/><line x1="16" y1="3" x2="16" y2="7" stroke-linecap="round"/></svg>
-        <div class="value" id="stat-month">— <span class="unit">mm</span></div>
-      </div>
-      <div class="sub" id="stat-month-sub">&nbsp;</div>
-    </div>
-
-    <div class="stat">
       <div class="label">Lluvia este año</div>
       <div class="stat-icon-row">
         <svg viewBox="0 0 24 24" class="stat-icon" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="5.5"/><line x1="19" y1="20" x2="19" y2="15"/></svg>
@@ -120,23 +111,34 @@
       </div>
       <div class="sub" id="stat-year-sub">&nbsp;</div>
     </div>
+
+    <div class="stat">
+      <div class="label">Última lluvia</div>
+      <div class="stat-icon-row">
+        <svg viewBox="0 0 24 24" class="stat-icon" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M17.5 19a4.5 4.5 0 0 0-.4-9A5.5 5.5 0 0 0 6.6 8 4.5 4.5 0 0 0 6.5 17H17z"/></svg>
+        <div class="value" id="stat-last-rain">— <span class="unit">mm</span></div>
+      </div>
+      <div class="sub" id="stat-last-rain-sub">&nbsp;</div>
+    </div>
+
+    <div class="stat">
+      <div class="label">Días sin lluvia</div>
+      <div class="stat-icon-row">
+        <svg viewBox="0 0 24 24" class="stat-icon" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.2" y="5" width="17.6" height="15.5" rx="2"/><line x1="3.2" y1="9.3" x2="20.8" y2="9.3"/><line x1="8" y1="3" x2="8" y2="7" stroke-linecap="round"/><line x1="16" y1="3" x2="16" y2="7" stroke-linecap="round"/></svg>
+        <div class="value" id="stat-dry-days">—</div>
+      </div>
+      <div class="sub" id="stat-dry-days-sub">&nbsp;</div>
+    </div>
   </section>
 
   <div class="grid-mid">
     <section class="card chart-card">
       <div class="chart-head">
         <h2>Lluvias recientes</h2>
-        <div class="chart-controls">
-          <div class="year-nav" id="recent-year-nav">
-            <button type="button" id="recent-year-prev" aria-label="Año anterior">‹</button>
-            <span id="recent-year-label">—</span>
-            <button type="button" id="recent-year-next" aria-label="Año siguiente">›</button>
-          </div>
-          <div class="period-toggle" id="period-toggle">
-            <button type="button" data-period="7">7 días</button>
-            <button type="button" data-period="30">30 días</button>
-            <button type="button" data-period="year" class="active">Este año</button>
-          </div>
+        <div class="year-nav" id="recent-year-nav">
+          <button type="button" id="recent-year-prev" aria-label="Año anterior">‹</button>
+          <span id="recent-year-label">—</span>
+          <button type="button" id="recent-year-next" aria-label="Año siguiente">›</button>
         </div>
       </div>
       <div id="recent-chart-wrap"></div>

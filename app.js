@@ -118,10 +118,12 @@
 
     statToday: document.getElementById('stat-today'),
     statTodaySub: document.getElementById('stat-today-sub'),
-    statMonth: document.getElementById('stat-month'),
-    statMonthSub: document.getElementById('stat-month-sub'),
     statYear: document.getElementById('stat-year'),
     statYearSub: document.getElementById('stat-year-sub'),
+    statLastRain: document.getElementById('stat-last-rain'),
+    statLastRainSub: document.getElementById('stat-last-rain-sub'),
+    statDryDays: document.getElementById('stat-dry-days'),
+    statDryDaysSub: document.getElementById('stat-dry-days-sub'),
 
     avatarBtn: document.getElementById('avatar-btn'),
     popover: document.getElementById('avatar-popover'),
@@ -158,7 +160,6 @@
     fNote: document.getElementById('f-note'),
     submitBtn: document.getElementById('submit-btn'),
 
-    periodToggle: document.getElementById('period-toggle'),
     recentChartWrap: document.getElementById('recent-chart-wrap'),
     recentYearNav: document.getElementById('recent-year-nav'),
     recentYearPrev: document.getElementById('recent-year-prev'),
@@ -202,7 +203,6 @@
   let entriesByDate = {};
   let loaded = false;
   let editingDate = null;
-  let recentPeriod = 'year';
   let chartYear = new Date().getFullYear();
   let calYear = new Date().getFullYear();
   let calMonth = new Date().getMonth();
@@ -440,8 +440,9 @@
   function renderStats() {
     if (!loaded) {
       el.statToday.innerHTML = '… <span class="unit">mm</span>';
-      el.statMonth.innerHTML = '… <span class="unit">mm</span>';
       el.statYear.innerHTML = '… <span class="unit">mm</span>';
+      el.statLastRain.innerHTML = '… <span class="unit">mm</span>';
+      el.statDryDays.textContent = '…';
       return;
     }
     const nowD = new Date();
@@ -452,20 +453,22 @@
       ? (todayEntry.note || 'Registrado hoy')
       : 'Sin precipitaciones';
 
-    // Month: current month-to-date vs same day-range of previous month
-    const y = nowD.getFullYear(), m = nowD.getMonth(), dom = nowD.getDate();
-    const curMonthKey = y + '-' + String(m + 1).padStart(2, '0');
-    const monthTotal = entries.filter(e => e.date.startsWith(curMonthKey)).reduce((s, e) => s + e.mm, 0);
-    let prevY = y, prevM = m - 1;
-    if (prevM < 0) { prevM = 11; prevY -= 1; }
-    const prevMonthKey = prevY + '-' + String(prevM + 1).padStart(2, '0');
-    const prevDays = Math.min(dom, daysInMonth(prevY, prevM));
-    const prevMonthTotal = entries
-      .filter(e => e.date.startsWith(prevMonthKey) && Number(e.date.slice(8, 10)) <= prevDays)
-      .reduce((s, e) => s + e.mm, 0);
-    el.statMonth.innerHTML = fmtMm(monthTotal) + ' <span class="unit">mm</span>';
-    el.statMonthSub.innerHTML = deltaHtml(monthTotal, prevMonthTotal, 'vs mes anterior');
+    // Última lluvia y días transcurridos desde entonces
+    const lastRain = entries.find(e => e.mm > 0);
+    if (lastRain) {
+      el.statLastRain.innerHTML = fmtMm(lastRain.mm) + ' <span class="unit">mm</span>';
+      el.statLastRainSub.textContent = formatShort(lastRain.date);
+      const dryDays = Math.round((parseLocal(today) - parseLocal(lastRain.date)) / 86400000);
+      el.statDryDays.textContent = dryDays;
+      el.statDryDaysSub.textContent = dryDays === 0 ? 'Llovió hoy' : dryDays === 1 ? 'Desde ayer' : 'Desde el ' + formatDM(lastRain.date);
+    } else {
+      el.statLastRain.innerHTML = '— <span class="unit">mm</span>';
+      el.statLastRainSub.textContent = 'Sin registros';
+      el.statDryDays.textContent = '—';
+      el.statDryDaysSub.textContent = 'Sin registros';
+    }
 
+    const y = nowD.getFullYear(), m = nowD.getMonth(), dom = nowD.getDate();
     // Year: Jan1-to-today vs same period last year
     const cutoff = String(m + 1).padStart(2, '0') + '-' + String(dom).padStart(2, '0');
     const yearTotal = entries.filter(e => e.date.startsWith(String(y) + '-')).reduce((s, e) => s + e.mm, 0);
@@ -491,40 +494,7 @@
       el.recentChartWrap.innerHTML = '<div class="chart-empty">Cargando…</div>';
       return;
     }
-    if (recentPeriod === 'year') {
-      renderYearChart();
-      return;
-    }
-    const n = recentPeriod === '30' ? 30 : 7;
-    const days = [];
-    const base = new Date();
-    for (let i = n - 1; i >= 0; i--) {
-      const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() - i);
-      const key = ymd(d);
-      days.push({ date: key, mm: entriesByDate[key] ? entriesByDate[key].mm : 0, d });
-    }
-    const max = Math.max(...days.map(x => x.mm), 1);
-    const W = 640, H = 210, padL = 4, padR = 4, padB = 26, padT = 16;
-    const plotW = W - padL - padR;
-    const plotH = H - padT - padB;
-    const gap = n === 30 ? 3 : 8;
-    const barW = (plotW - gap * (n - 1)) / n;
-    const labelEvery = n === 30 ? 5 : 1;
-
-    let bars = '', labels = '';
-    days.forEach((day, i) => {
-      const h = day.mm / max * plotH;
-      const x = padL + i * (barW + gap);
-      const y = padT + plotH - h;
-      const isToday = day.date === todayStr();
-      bars += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + Math.max(h, 0).toFixed(1) + '" rx="2.5" fill="' + (isToday ? 'var(--accent)' : 'var(--accent-2)') + '"></rect>';
-      if (i % labelEvery === 0 || i === days.length - 1) {
-        labels += '<text x="' + (x + barW / 2).toFixed(1) + '" y="' + (H - 8).toFixed(1) + '" text-anchor="middle" font-size="9" font-family="var(--font-body)" fill="var(--ink-soft)">' + formatDM(day.date) + '</text>';
-      }
-    });
-    el.recentChartWrap.innerHTML = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Lluvia de los últimos ' + n + ' días">' +
-      '<line x1="' + padL + '" y1="' + (padT + plotH) + '" x2="' + (W - padR) + '" y2="' + (padT + plotH) + '" stroke="var(--line)" stroke-width="1"></line>' +
-      bars + labels + '</svg>';
+    renderYearChart();
   }
 
   function renderYearChart() {
@@ -560,16 +530,6 @@
       '<line x1="' + padL + '" y1="' + (padT + plotH) + '" x2="' + (W - padR) + '" y2="' + (padT + plotH) + '" stroke="var(--line)" stroke-width="1"></line>' +
       bars + labels + '</svg>';
   }
-
-  el.periodToggle.addEventListener('click', (ev) => {
-    const btn = ev.target.closest('button[data-period]');
-    if (!btn) return;
-    recentPeriod = btn.getAttribute('data-period');
-    [...el.periodToggle.querySelectorAll('button')].forEach(b => b.classList.toggle('active', b === btn));
-    el.recentYearNav.hidden = recentPeriod !== 'year';
-    renderRecentYearNav();
-    renderRecentChart();
-  });
 
   function dataYears() {
     const ys = new Set(entries.map(e => Number(e.date.slice(0, 4))));
