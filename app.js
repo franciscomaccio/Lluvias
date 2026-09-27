@@ -934,7 +934,8 @@
       ' C16,' + (fillY - amp).toFixed(1) + ' 16,' + (fillY + amp).toFixed(1) + ' 32,' + fillY.toFixed(1) +
       ' C48,' + (fillY - amp).toFixed(1) + ' 48,' + (fillY + amp).toFixed(1) + ' 64,' + fillY.toFixed(1) +
       ' L64,' + H + ' L0,' + H + ' Z';
-    const textY = Math.min(Math.max(fillY + 16, 42), 108);
+    const textY = Math.min(Math.max(fillY + 16, 42), 104);
+    const textY2 = Math.min(textY + 13, 118);
     const tooltip = escapeHtml(damName) + ': cota actual ' + fmtNum2(currentLevel) + ' m (' + Math.round(clamped) + '%)';
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" class="tank-svg" role="img" aria-label="' + tooltip + '">' +
       '<title>' + tooltip + '</title>' +
@@ -945,6 +946,7 @@
       '<g clip-path="url(#' + clipId + ')"><path d="' + wave + '" fill="url(#' + gradId + ')"></path></g>' +
       '<path d="' + basin + '" fill="none" stroke="var(--line)" stroke-width="1.5"></path>' +
       '<text x="' + (W / 2) + '" y="' + textY.toFixed(1) + '" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff" font-family="var(--font-mono)">' + Math.round(clamped) + '%</text>' +
+      '<text x="' + (W / 2) + '" y="' + textY2.toFixed(1) + '" text-anchor="middle" font-size="9" font-weight="700" fill="#ffffff" font-family="var(--font-mono)">' + fmtNum2(currentLevel) + ' m</text>' +
       '</svg>';
   }
 
