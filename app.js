@@ -452,9 +452,15 @@
     const today = todayStr();
     const todayEntry = entriesByDate[today];
     el.statToday.innerHTML = fmtMm(todayEntry ? todayEntry.mm : 0) + ' <span class="unit">mm</span>';
-    el.statTodaySub.textContent = todayEntry
-      ? (todayEntry.note || 'Registrado hoy')
-      : 'Sin precipitaciones';
+    if (todayEntry) {
+      const loadedAt = todayEntry.updated_at
+        ? new Date(todayEntry.updated_at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: WEATHER_TZ })
+        : null;
+      const noteHtml = todayEntry.note ? escapeHtml(todayEntry.note) + '<br>' : '';
+      el.statTodaySub.innerHTML = noteHtml + (loadedAt ? '<span class="sub-time">Cargado a las ' + loadedAt + '</span>' : 'Registrado hoy');
+    } else {
+      el.statTodaySub.textContent = 'Sin precipitaciones';
+    }
 
     // Última lluvia (sin contar la de hoy) y días transcurridos desde la última lluvia (contando hoy)
     const lastRainBeforeToday = entries.find(e => e.mm > 0 && e.date !== today);
@@ -905,7 +911,7 @@
     if (!selectedUserId) return;
     const { data, error } = await client
       .from('rain_entries')
-      .select('date, mm, note')
+      .select('date, mm, note, updated_at')
       .eq('user_id', selectedUserId)
       .order('date', { ascending: false })
       .limit(2000);

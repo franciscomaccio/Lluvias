@@ -242,6 +242,12 @@ svg { display: block; }
   font-size: 0.82rem;
   color: var(--ink-soft);
 }
+.stat .sub .sub-time {
+  display: inline-block;
+  margin-top: 2px;
+  font-size: 0.74rem;
+  font-family: var(--font-mono);
+}
 .sub .delta { font-weight: 600; }
 .sub .delta.up { color: var(--success); }
 .sub .delta.down { color: var(--danger); }
