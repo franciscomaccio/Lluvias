@@ -452,17 +452,22 @@
       ? (todayEntry.note || 'Registrado hoy')
       : 'Sin precipitaciones';
 
-    // Última lluvia y días transcurridos desde entonces
+    // Última lluvia (sin contar la de hoy) y días transcurridos desde la última lluvia (contando hoy)
+    const lastRainBeforeToday = entries.find(e => e.mm > 0 && e.date !== today);
+    if (lastRainBeforeToday) {
+      el.statLastRain.innerHTML = fmtMm(lastRainBeforeToday.mm) + ' <span class="unit">mm</span>';
+      el.statLastRainSub.textContent = formatShort(lastRainBeforeToday.date);
+    } else {
+      el.statLastRain.innerHTML = '— <span class="unit">mm</span>';
+      el.statLastRainSub.textContent = 'Sin registros';
+    }
+
     const lastRain = entries.find(e => e.mm > 0);
     if (lastRain) {
-      el.statLastRain.innerHTML = fmtMm(lastRain.mm) + ' <span class="unit">mm</span>';
-      el.statLastRainSub.textContent = formatShort(lastRain.date);
       const dryDays = Math.round((parseLocal(today) - parseLocal(lastRain.date)) / 86400000);
       el.statDryDays.textContent = dryDays;
       el.statDryDaysSub.textContent = dryDays === 0 ? 'Llovió hoy' : dryDays === 1 ? 'Desde ayer' : 'Desde el ' + formatDM(lastRain.date);
     } else {
-      el.statLastRain.innerHTML = '— <span class="unit">mm</span>';
-      el.statLastRainSub.textContent = 'Sin registros';
       el.statDryDays.textContent = '—';
       el.statDryDaysSub.textContent = 'Sin registros';
     }
