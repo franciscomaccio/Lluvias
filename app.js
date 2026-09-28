@@ -274,6 +274,7 @@
 
   // ---------- Weather ----------
   const RAIN_FORECAST_MM_THRESHOLD = 1;
+  const ACTIVE_RAIN_CODES = new Set([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99]);
   const WEEKDAYS_LONG = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 
   async function fetchWeather() {
@@ -286,7 +287,10 @@
       if (!res.ok) throw new Error('http ' + res.status);
       const data = await res.json();
       renderWeather(data.current);
-      renderNextRain(data.daily);
+      const todayEntry = entriesByDate[todayStr()];
+      const alreadyRainedToday = !!(todayEntry && todayEntry.mm > 0);
+      const isRainingNow = ACTIVE_RAIN_CODES.has(data.current.weather_code);
+      renderNextRain(data.daily, alreadyRainedToday || isRainingNow);
     } catch (e) {
       el.weatherCond.textContent = 'No se pudo cargar el clima';
       document.getElementById('weather-next-rain-text').textContent = 'No se pudo cargar el pronóstico.';
@@ -312,11 +316,11 @@
     const weekday = WEEKDAYS_LONG[d.getDay()];
     return weekday.charAt(0).toUpperCase() + weekday.slice(1) + ' ' + formatDM(dateStr);
   }
-  function renderNextRain(daily) {
+  function renderNextRain(daily, skipToday) {
     const textEl = document.getElementById('weather-next-rain-text');
     if (!daily || !daily.time) { textEl.textContent = 'Pronóstico no disponible.'; return; }
     let idx = -1;
-    for (let i = 0; i < daily.time.length; i++) {
+    for (let i = skipToday ? 1 : 0; i < daily.time.length; i++) {
       if (daily.precipitation_sum[i] >= RAIN_FORECAST_MM_THRESHOLD) { idx = i; break; }
     }
     if (idx === -1) {
