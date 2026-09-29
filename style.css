@@ -182,6 +182,22 @@ svg { display: block; }
   white-space: nowrap;
 }
 .plus-icon { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
+.greeting-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.visit-counter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.visit-counter svg { width: 16px; height: 16px; color: var(--ink-soft); flex-shrink: 0; }
 
 .banner {
   background: var(--danger-soft);

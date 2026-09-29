@@ -7,6 +7,8 @@
   let WEATHER_LON = -64.35903;
   const WEATHER_TZ = 'America/Argentina/Cordoba';
 
+  const SITE_OWNER_ID = '79e5ca14-79bd-4551-9b92-edddac9e434d';
+  const OWNER_DEVICE_FLAG = 'pluviometro_owner_device';
   const YEAR_COLORS = ['#2f6f9e', '#c2703d', '#4f8f5b', '#8a4f9e', '#a4453a', '#3d8f95'];
   const DAM_ORDER = ['San Roque', 'La Viña', 'Cruz del Eje', 'Los Molinos', 'Emb. Río III', 'La Quebrada', 'Pichanas', 'Dique El Cajón'];
   const MONTH_STARTS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
@@ -799,10 +801,31 @@
 
   function applyAuthState(session) {
     currentSession = session;
+    if (session && session.user.id === SITE_OWNER_ID) {
+      try { localStorage.setItem(OWNER_DEVICE_FLAG, '1'); } catch (e) { /* localStorage no disponible */ }
+    }
     updateWriteAccess();
   }
   client.auth.getSession().then(({ data }) => applyAuthState(data.session));
   client.auth.onAuthStateChange((_event, session) => applyAuthState(session));
+
+  // ---------- Contador de visitas ----------
+  function isOwnerDevice() {
+    try { return localStorage.getItem(OWNER_DEVICE_FLAG) === '1'; } catch (e) { return false; }
+  }
+  async function trackVisitAndCount() {
+    const counterEl = document.getElementById('visit-counter-value');
+    try {
+      if (!isOwnerDevice()) {
+        await client.from('page_visits').insert({});
+      }
+      const { count, error } = await client.from('page_visits').select('*', { count: 'exact', head: true });
+      if (!error && counterEl) {
+        counterEl.textContent = (count || 0).toLocaleString('es-AR') + (count === 1 ? ' visita' : ' visitas');
+      }
+    } catch (e) { /* si falla, el contador simplemente no se actualiza */ }
+  }
+  trackVisitAndCount();
 
   // ---------- Entry modal ----------
   function openEntryModal(dateToEdit) {

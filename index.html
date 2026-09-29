@@ -65,10 +65,16 @@
       <h1>¡Hola!</h1>
       <p>Acá podés ver el clima actual, los niveles de los diques de Córdoba y el historial de lluvias que se va registrando.</p>
     </div>
-    <button type="button" class="submit-btn primary-cta" id="open-register-btn" style="display:none;">
-      <svg viewBox="0 0 24 24" class="plus-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Registrar lluvia de hoy
-    </button>
+    <div class="greeting-actions">
+      <button type="button" class="submit-btn primary-cta" id="open-register-btn" style="display:none;">
+        <svg viewBox="0 0 24 24" class="plus-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Registrar lluvia de hoy
+      </button>
+      <div class="visit-counter" id="visit-counter" title="Visitas a la página">
+        <svg viewBox="0 0 24 24"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+        <span id="visit-counter-value">—</span>
+      </div>
+    </div>
   </section>
 
   <div id="banner" class="banner page-banner"></div>
