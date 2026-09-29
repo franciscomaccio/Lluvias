@@ -197,13 +197,13 @@
       <div class="chart-head">
         <h2>Historial de lluvias</h2>
         <div class="period-toggle" id="history-tabs">
-          <button type="button" data-tab="records" class="active">Registros</button>
-          <button type="button" data-tab="grid">Grilla anual</button>
+          <button type="button" data-tab="grid" class="active">Grilla anual</button>
           <button type="button" data-tab="cumulative">Acumulado anual</button>
+          <button type="button" data-tab="records">Registros</button>
         </div>
       </div>
 
-      <div id="history-tab-records">
+      <div id="history-tab-records" hidden>
         <div class="history-year-row">
           <select id="history-year" class="year-select"></select>
         </div>
@@ -223,7 +223,7 @@
         <div class="empty-history" id="empty-history" style="display:none;">Todavía no hay registros.</div>
       </div>
 
-      <div id="history-tab-grid" hidden>
+      <div id="history-tab-grid">
         <div class="cal-legend grid-legend">
           <span><i class="dot tier-0"></i>0 mm</span>
           <span><i class="dot tier-1"></i>&gt;0 mm</span>

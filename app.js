@@ -205,6 +205,7 @@
   let entriesByDate = {};
   let loaded = false;
   let editingDate = null;
+  let scrolledGridToToday = false;
   let chartYear = new Date().getFullYear();
   let calYear = new Date().getFullYear();
   let calMonth = new Date().getMonth();
@@ -370,6 +371,7 @@
 
     const cum = {};
     years.forEach(y => { cum[y] = 0; });
+    const todayKey = todayStr().slice(5);
 
     const headHtml = '<th class="grid-date-col">Fecha</th>' + years.map(y =>
       '<th class="num grid-year-col">' + y + '</th><th class="num grid-acu-col">Acu. ' + y + '</th>'
@@ -390,10 +392,19 @@
         cells += '<td class="num grid-year-col tier-' + tier + '"' + title + '>' + (mm !== null ? fmtMm(mm) : '') + '</td>';
         cells += '<td class="num grid-acu-col">' + fmtMm(cum[y]) + '</td>';
       });
-      bodyHtml += '<tr><td class="grid-date-col">' + row.label + '</td>' + cells + '</tr>';
+      const rowId = row.key === todayKey ? ' id="grid-today-row"' : '';
+      bodyHtml += '<tr' + rowId + '><td class="grid-date-col">' + row.label + '</td>' + cells + '</tr>';
     });
 
     el.gridYearWrap.innerHTML = '<table class="data-table grid-table"><thead><tr>' + headHtml + '</tr></thead><tbody>' + bodyHtml + '</tbody></table>';
+
+    if (!scrolledGridToToday) {
+      const todayRow = document.getElementById('grid-today-row');
+      if (todayRow) {
+        todayRow.scrollIntoView({ block: 'center' });
+        scrolledGridToToday = true;
+      }
+    }
   }
 
   function computeYearlyStats() {
