@@ -321,8 +321,24 @@ svg { display: block; }
   grid-template-columns: 1.5fr 1fr;
   gap: 16px;
   margin-bottom: 16px;
-  align-items: start;
+  align-items: stretch;
 }
+.grid-mid .card {
+  display: flex;
+  flex-direction: column;
+}
+.chart-card #totals-tab-monthly,
+.chart-card #totals-tab-yearly {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.chart-card #totals-tab-monthly[hidden],
+.chart-card #totals-tab-yearly[hidden] {
+  display: none;
+}
+.chart-card #recent-chart-wrap { width: 100%; }
 @media (max-width: 900px) {
   .grid-mid { grid-template-columns: 1fr; }
 }
