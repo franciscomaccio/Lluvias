@@ -581,7 +581,10 @@
     const totals = new Array(12).fill(0);
     yearEntries.forEach(e => { totals[Number(e.date.slice(5, 7)) - 1] += e.mm; });
     const max = Math.max(...totals, 1);
-    const W = 640, H = 210, padL = 4, padR = 4, padB = 24, padT = 20;
+    const isMobile = window.innerWidth < 900;
+    const W = 640, H = isMobile ? 420 : 210, padL = 4, padR = 4, padB = isMobile ? 32 : 24, padT = 20;
+    const valueFontSize = isMobile ? 14 : 9;
+    const monthFontSize = isMobile ? 15 : 10;
     const plotW = W - padL - padR;
     const plotH = H - padT - padB;
     const gap = 8;
@@ -596,9 +599,9 @@
       const isCur = i === curMonth;
       bars += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + Math.max(h, totals[i] > 0 ? 2 : 0).toFixed(1) + '" rx="3" fill="' + (isCur ? 'var(--accent)' : 'var(--accent-2)') + '"></rect>';
       if (totals[i] > 0) {
-        bars += '<text x="' + (x + barW / 2).toFixed(1) + '" y="' + (y - 5).toFixed(1) + '" text-anchor="middle" font-size="9" font-family="var(--font-mono)" fill="var(--ink-soft)">' + fmtMm(totals[i]) + '</text>';
+        bars += '<text x="' + (x + barW / 2).toFixed(1) + '" y="' + (y - (isMobile ? 8 : 5)).toFixed(1) + '" text-anchor="middle" font-size="' + valueFontSize + '" font-family="var(--font-mono)" fill="var(--ink-soft)">' + fmtMm(totals[i]) + '</text>';
       }
-      labels += '<text x="' + (x + barW / 2).toFixed(1) + '" y="' + (H - 6).toFixed(1) + '" text-anchor="middle" font-size="10" font-family="var(--font-body)" fill="' + (isCur ? 'var(--accent)' : 'var(--ink-soft)') + '" font-weight="' + (isCur ? '700' : '400') + '">' + MONTHS[i] + '</text>';
+      labels += '<text x="' + (x + barW / 2).toFixed(1) + '" y="' + (H - (isMobile ? 10 : 6)).toFixed(1) + '" text-anchor="middle" font-size="' + monthFontSize + '" font-family="var(--font-body)" fill="' + (isCur ? 'var(--accent)' : 'var(--ink-soft)') + '" font-weight="' + (isCur ? '700' : '400') + '">' + MONTHS[i] + '</text>';
     }
     el.recentChartWrap.innerHTML = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Lluvia mensual ' + year + '">' +
       '<line x1="' + padL + '" y1="' + (padT + plotH) + '" x2="' + (W - padR) + '" y2="' + (padT + plotH) + '" stroke="var(--line)" stroke-width="1"></line>' +
