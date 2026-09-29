@@ -473,6 +473,46 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
 .history-card td.actions { text-align: right; white-space: nowrap; position: relative; }
 .empty-history { padding: 30px 10px; text-align: center; color: var(--ink-soft); font-size: 0.9rem; }
 
+/* Grilla anual (365/366 días x año) */
+.grid-legend { margin-bottom: 12px; }
+.grid-year-scroll { overflow: auto; max-height: 600px; border: 1px solid var(--line); border-radius: 10px; }
+.grid-table { width: 100%; border-collapse: collapse; font-size: 0.76rem; }
+.grid-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+  text-align: right;
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-weight: 600;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.grid-table thead th.grid-date-col { text-align: left; position: sticky; left: 0; z-index: 2; }
+.grid-table td {
+  padding: 3px 8px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.grid-table td.grid-date-col {
+  text-align: left;
+  color: var(--ink-soft);
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+}
+.grid-table td.grid-acu-col { color: var(--ink-soft); }
+.grid-table td.grid-year-col.tier-1 { background: color-mix(in srgb, var(--accent) 32%, var(--surface-2)); }
+.grid-table td.grid-year-col.tier-2 { background: color-mix(in srgb, var(--accent) 62%, var(--surface-2)); color: #fff; }
+.grid-table td.grid-year-col.tier-3 { background: var(--accent-deep); color: #fff; }
+
 .kebab-btn {
   background: none;
   border: none;

@@ -177,7 +177,9 @@
     historyYear: document.getElementById('history-year'),
     historyTabs: document.getElementById('history-tabs'),
     historyTabRecords: document.getElementById('history-tab-records'),
+    historyTabGrid: document.getElementById('history-tab-grid'),
     historyTabCumulative: document.getElementById('history-tab-cumulative'),
+    gridYearWrap: document.getElementById('grid-year-wrap'),
     historyBody: document.getElementById('history-body'),
     emptyHistory: document.getElementById('empty-history'),
 
@@ -345,6 +347,53 @@
     renderHistory();
     renderYearlyTable();
     renderCumulativeChart();
+    renderHistoryGrid();
+  }
+
+  function renderHistoryGrid() {
+    if (!loaded) { el.gridYearWrap.innerHTML = '<div class="chart-empty">Cargando…</div>'; return; }
+    const years = Array.from(new Set(entries.map(e => e.date.slice(0, 4)))).sort();
+    if (years.length === 0) { el.gridYearWrap.innerHTML = '<div class="chart-empty">Sin datos todavía.</div>'; return; }
+
+    const byYear = {};
+    years.forEach(y => { byYear[y] = {}; });
+    entries.forEach(e => { byYear[e.date.slice(0, 4)][e.date.slice(5)] = e; });
+
+    // Plantilla de 366 días (2024 es bisiesto) para incluir el 29/feb.
+    const rows = [];
+    for (let m = 0; m < 12; m++) {
+      const dim = daysInMonth(2024, m);
+      for (let d = 1; d <= dim; d++) {
+        rows.push({ key: String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0'), label: d + ' / ' + MONTHS[m].toLowerCase() });
+      }
+    }
+
+    const cum = {};
+    years.forEach(y => { cum[y] = 0; });
+
+    const headHtml = '<th class="grid-date-col">Fecha</th>' + years.map(y =>
+      '<th class="num grid-year-col">' + y + '</th><th class="num grid-acu-col">Acu. ' + y + '</th>'
+    ).join('');
+
+    let bodyHtml = '';
+    rows.forEach(row => {
+      let cells = '';
+      years.forEach(y => {
+        const entry = byYear[y][row.key];
+        const mm = entry ? entry.mm : null;
+        if (mm !== null) cum[y] += mm;
+        let tier = 0;
+        if (mm !== null) { if (mm >= 30) tier = 3; else if (mm >= 10) tier = 2; else if (mm > 0) tier = 1; }
+        const titleParts = mm !== null ? [row.label + '/' + y + ': ' + fmtMm(mm) + ' mm'] : [];
+        if (entry && entry.note) titleParts.push(entry.note);
+        const title = titleParts.length ? ' title="' + escapeHtml(titleParts.join(' — ')) + '"' : '';
+        cells += '<td class="num grid-year-col tier-' + tier + '"' + title + '>' + (mm !== null ? fmtMm(mm) : '') + '</td>';
+        cells += '<td class="num grid-acu-col">' + fmtMm(cum[y]) + '</td>';
+      });
+      bodyHtml += '<tr><td class="grid-date-col">' + row.label + '</td>' + cells + '</tr>';
+    });
+
+    el.gridYearWrap.innerHTML = '<table class="data-table grid-table"><thead><tr>' + headHtml + '</tr></thead><tbody>' + bodyHtml + '</tbody></table>';
   }
 
   function computeYearlyStats() {
@@ -1138,6 +1187,7 @@
     const tab = btn.getAttribute('data-tab');
     [...el.historyTabs.querySelectorAll('button')].forEach(b => b.classList.toggle('active', b === btn));
     el.historyTabRecords.hidden = tab !== 'records';
+    el.historyTabGrid.hidden = tab !== 'grid';
     el.historyTabCumulative.hidden = tab !== 'cumulative';
   });
 
