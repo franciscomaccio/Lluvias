@@ -825,6 +825,7 @@ footer.note {
   color: var(--ink-soft);
 }
 footer.note p { margin: 0 0 12px; }
+.footer-visits { font-size: 0.7rem; opacity: 0.8; }
 .contact-row {
   display: flex;
   justify-content: center;

@@ -810,18 +810,26 @@
   client.auth.onAuthStateChange((_event, session) => applyAuthState(session));
 
   // ---------- Contador de visitas ----------
+  const VISIT_SESSION_FLAG = 'pluviometro_visit_counted';
   function isOwnerDevice() {
     try { return localStorage.getItem(OWNER_DEVICE_FLAG) === '1'; } catch (e) { return false; }
   }
+  function alreadyCountedThisSession() {
+    try { return sessionStorage.getItem(VISIT_SESSION_FLAG) === '1'; } catch (e) { return false; }
+  }
   async function trackVisitAndCount() {
-    const counterEl = document.getElementById('visit-counter-value');
+    const headerEl = document.getElementById('visit-counter-value');
+    const footerEl = document.getElementById('visit-counter-footer');
     try {
-      if (!isOwnerDevice()) {
+      if (!isOwnerDevice() && !alreadyCountedThisSession()) {
         await client.from('page_visits').insert({});
+        try { sessionStorage.setItem(VISIT_SESSION_FLAG, '1'); } catch (e) { /* sessionStorage no disponible */ }
       }
       const { count, error } = await client.from('page_visits').select('*', { count: 'exact', head: true });
-      if (!error && counterEl) {
-        counterEl.textContent = (count || 0).toLocaleString('es-AR') + (count === 1 ? ' visita' : ' visitas');
+      if (!error) {
+        const label = (count || 0).toLocaleString('es-AR') + (count === 1 ? ' visita' : ' visitas');
+        if (headerEl) headerEl.textContent = label;
+        if (footerEl) footerEl.textContent = label + ' a la página';
       }
     } catch (e) { /* si falla, el contador simplemente no se actualiza */ }
   }
