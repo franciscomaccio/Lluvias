@@ -401,7 +401,12 @@
     if (!scrolledGridToToday) {
       const todayRow = document.getElementById('grid-today-row');
       if (todayRow) {
-        todayRow.scrollIntoView({ block: 'center' });
+        // Centrar la fila de hoy desplazando solo el contenedor interno de
+        // la grilla, sin mover el scroll de la página.
+        const cRect = el.gridYearWrap.getBoundingClientRect();
+        const rRect = todayRow.getBoundingClientRect();
+        const delta = (rRect.top + rRect.height / 2) - (cRect.top + cRect.height / 2);
+        el.gridYearWrap.scrollTop += delta;
         scrolledGridToToday = true;
       }
     }
