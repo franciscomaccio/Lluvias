@@ -1079,6 +1079,16 @@
     }).join('');
   }
 
+  let damSyncAttempted = false;
+  async function maybeSyncDamLevels(latestDate) {
+    if (damSyncAttempted || latestDate === todayStr()) return;
+    damSyncAttempted = true;
+    try {
+      const { data, error } = await client.functions.invoke('dam-levels-sync');
+      if (!error && data && data.ok) fetchDamLevels();
+    } catch (e) { /* sin conexión a la función: se queda con el último dato disponible */ }
+  }
+
   async function fetchDamLevels() {
     const { data, error } = await client
       .from('dam_levels')
@@ -1088,6 +1098,7 @@
     if (error || !data || data.length === 0) {
       el.damTanksGrid.innerHTML = '';
       el.damsUpdated.textContent = '';
+      maybeSyncDamLevels(null);
       return;
     }
     const latestDate = data[0].date;
@@ -1098,6 +1109,7 @@
     });
     el.damsUpdated.textContent = 'Actualizado: ' + formatShort(latestDate);
     renderDamTanks(rows);
+    maybeSyncDamLevels(latestDate);
   }
 
   // ---------- Dam level history (evolución de niveles) ----------
