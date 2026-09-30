@@ -698,12 +698,28 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
   font-weight: 600;
   white-space: nowrap;
 }
+.cumulative-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.cum-stat { padding: 16px; }
+.cum-stat .value { font-size: 1.3rem; }
+.cum-stat .sub { margin-top: 6px; }
+.diff-value .up { color: var(--success); }
+.diff-value .down { color: var(--danger); }
+@media (max-width: 760px) {
+  .cumulative-stats { grid-template-columns: 1fr; }
+}
+
 .cumulative-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 14px;
   font-size: 0.78rem;
   color: var(--ink-soft);
+  margin-top: 12px;
 }
 .cumulative-legend span {
   display: flex;
@@ -717,6 +733,19 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
   border-radius: 50%;
   display: inline-block;
 }
+
+.cumulative-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+.cumulative-note .mini-icon { color: var(--accent); margin-top: 1px; flex-shrink: 0; }
 
 /* Side stack */
 .quote-card {

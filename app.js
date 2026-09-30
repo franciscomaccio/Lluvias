@@ -197,8 +197,10 @@
     damsTabHistory: document.getElementById('dams-tab-history'),
 
     totalsBody: document.getElementById('totals-body'),
+    cumulativeStats: document.getElementById('cumulative-stats'),
     cumulativeLegend: document.getElementById('cumulative-legend'),
     cumulativeChartWrap: document.getElementById('cumulative-chart-wrap'),
+    cumulativeNote: document.getElementById('cumulative-note'),
 
     quoteText: document.getElementById('quote-text'),
   };
@@ -440,13 +442,17 @@
   function renderCumulativeChart() {
     if (!loaded) {
       el.cumulativeChartWrap.innerHTML = '<div class="chart-empty">Cargando…</div>';
+      el.cumulativeStats.innerHTML = '';
       el.cumulativeLegend.innerHTML = '';
+      el.cumulativeNote.innerHTML = '';
       return;
     }
     const years = Array.from(new Set(entries.map(e => e.date.slice(0, 4)))).sort();
     if (years.length === 0) {
       el.cumulativeChartWrap.innerHTML = '<div class="chart-empty">Sin datos todavía.</div>';
+      el.cumulativeStats.innerHTML = '';
       el.cumulativeLegend.innerHTML = '';
+      el.cumulativeNote.innerHTML = '';
       return;
     }
     const curYear = new Date().getFullYear();
@@ -467,44 +473,146 @@
       return { year: y, color: YEAR_COLORS[i % YEAR_COLORS.length], points, total: cum };
     });
 
+    renderCumulativeStats(series, curYear);
+
     const rawMax = Math.max(...series.map(s => s.total), 1);
     const step = niceStep(rawMax / 5);
     const maxVal = Math.ceil(rawMax / step) * step;
     const gridCount = Math.round(maxVal / step);
-    const W = 640, H = 380, padL = 42, padR = 10, padT = 14, padB = 26;
+    const isMobile = window.innerWidth < 640;
+    const axisFont = isMobile ? 14 : 9;
+    const W = 640, H = isMobile ? 490 : 380, padL = isMobile ? 54 : 44, padR = 14, padT = 32, padB = isMobile ? 34 : 26;
     const plotW = W - padL - padR, plotH = H - padT - padB;
+    const finalDoy = isLeap(curYear) ? 366 : 365;
     const xForDoy = doy => padL + (doy - 1) / 365 * plotW;
     const yForVal = v => padT + plotH - (v / maxVal) * plotH;
+    const baselineY = yForVal(0);
 
     let grid = '';
     for (let i = 0; i <= gridCount; i++) {
       const v = step * i;
       const y = yForVal(v);
       grid += '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y.toFixed(1) + '" stroke="var(--line)" stroke-width="1"></line>';
-      grid += '<text x="' + (padL - 8) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="end" font-size="9" font-family="var(--font-mono)" fill="var(--ink-soft)">' + Math.round(v) + '</text>';
+      grid += '<text x="' + (padL - 8) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="end" font-size="' + axisFont + '" font-family="var(--font-mono)" fill="var(--ink-soft)">' + Math.round(v).toLocaleString('es-AR') + '</text>';
     }
     let xLabels = '';
     MONTH_STARTS.filter((_, i) => i % 2 === 0).forEach(doy => {
       const x = xForDoy(doy);
-      const label = '1/' + MONTHS[MONTH_STARTS.indexOf(doy)];
-      xLabels += '<text x="' + x.toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="9" font-family="var(--font-body)" fill="var(--ink-soft)">' + label + '</text>';
+      const label = MONTHS[MONTH_STARTS.indexOf(doy)];
+      xLabels += '<text x="' + x.toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="' + axisFont + '" font-family="var(--font-body)" fill="var(--ink-soft)">' + label + '</text>';
     });
 
-    let lines = '';
+    // "Resto del año" shaded region + "Hoy" marker, only while the current year is still in progress
+    let resto = '', hoyLine = '', hoyLabel = '';
+    if (years.includes(String(curYear)) && curDoy < finalDoy) {
+      const xHoy = xForDoy(curDoy);
+      const xEnd = xForDoy(finalDoy);
+      resto = '<rect x="' + xHoy.toFixed(1) + '" y="' + padT + '" width="' + (xEnd - xHoy).toFixed(1) + '" height="' + plotH + '" fill="var(--ink)" fill-opacity="0.04"></rect>' +
+        '<text x="' + ((xHoy + xEnd) / 2).toFixed(1) + '" y="' + (padT + 14) + '" text-anchor="middle" font-size="' + axisFont + '" font-family="var(--font-body)" fill="var(--ink-soft)">Resto del año</text>';
+      hoyLine = '<line x1="' + xHoy.toFixed(1) + '" y1="' + padT + '" x2="' + xHoy.toFixed(1) + '" y2="' + (padT + plotH).toFixed(1) + '" stroke="var(--accent-deep)" stroke-width="1.4" stroke-dasharray="4 3"></line>';
+      const todayD = parseLocal(todayStr());
+      const hoyText = 'Hoy · ' + todayD.getDate() + ' ' + MONTHS[todayD.getMonth()];
+      const labelW = 16 + hoyText.length * (isMobile ? 7.8 : 5.6);
+      const labelX = Math.min(Math.max(xHoy - labelW / 2, padL), W - padR - labelW);
+      const hoyLabelH = isMobile ? 20 : 17;
+      hoyLabel = '<rect x="' + labelX.toFixed(1) + '" y="' + (padT - hoyLabelH - 1) + '" width="' + labelW.toFixed(1) + '" height="' + hoyLabelH + '" rx="' + (hoyLabelH / 2) + '" fill="var(--accent-deep)"></rect>' +
+        '<text x="' + (labelX + labelW / 2).toFixed(1) + '" y="' + (padT - hoyLabelH / 2 + 3) + '" text-anchor="middle" font-size="' + (isMobile ? 13 : 9.5) + '" font-family="var(--font-mono)" font-weight="700" fill="#fff">' + hoyText + '</text>';
+    }
+
+    let areas = '', lines = '', endDots = '';
+    const endpoints = [];
     series.forEach(s => {
       const d = s.points.map((p, i) => (i === 0 ? 'M' : 'L') + xForDoy(p.doy).toFixed(1) + ' ' + yForVal(p.cum).toFixed(1)).join(' ');
-      lines += '<path d="' + d + '" fill="none" stroke="' + s.color + '" stroke-width="2" stroke-linejoin="round"></path>';
+      const firstX = xForDoy(s.points[0].doy).toFixed(1);
       const last = s.points[s.points.length - 1];
-      lines += '<circle cx="' + xForDoy(last.doy).toFixed(1) + '" cy="' + yForVal(last.cum).toFixed(1) + '" r="3" fill="' + s.color + '"></circle>';
+      const lastX = xForDoy(last.doy).toFixed(1);
+      areas += '<path d="' + d + ' L ' + lastX + ' ' + baselineY.toFixed(1) + ' L ' + firstX + ' ' + baselineY.toFixed(1) + ' Z" fill="' + s.color + '" fill-opacity="0.09" stroke="none"></path>';
+      lines += '<path d="' + d + '" fill="none" stroke="' + s.color + '" stroke-width="' + (isMobile ? 2.4 : 2) + '" stroke-linejoin="round"></path>';
+      const cy = yForVal(last.cum);
+      endDots += '<circle cx="' + lastX + '" cy="' + cy.toFixed(1) + '" r="3.2" fill="' + s.color + '"></circle>';
+      endpoints.push({ x: Number(lastX), y: cy, color: s.color, text: s.year + ' · ' + fmtMm(s.total) + ' mm' });
+    });
+
+    // Stack end-of-line labels vertically so close values don't overlap
+    endpoints.sort((a, b) => a.y - b.y);
+    const minGap = isMobile ? 26 : 19;
+    for (let i = 1; i < endpoints.length; i++) {
+      if (endpoints[i].y - endpoints[i - 1].y < minGap) endpoints[i].y = endpoints[i - 1].y + minGap;
+    }
+    endpoints.forEach(p => { p.y = Math.min(Math.max(p.y, padT + 11), padT + plotH - 11); });
+    const pillFont = isMobile ? 15 : 10.5;
+    const pillH = isMobile ? 23 : 19;
+    let pills = '';
+    endpoints.forEach(p => {
+      const pillW = 26 + p.text.length * (isMobile ? 9.2 : 6.7);
+      const pillX = Math.min(p.x + 7, W - pillW - 2);
+      pills += '<g>' +
+        '<rect x="' + pillX.toFixed(1) + '" y="' + (p.y - pillH / 2).toFixed(1) + '" width="' + pillW.toFixed(1) + '" height="' + pillH + '" rx="' + (pillH / 2) + '" fill="var(--surface)" stroke="' + p.color + '" stroke-width="1.3"></rect>' +
+        '<text x="' + (pillX + pillW / 2).toFixed(1) + '" y="' + (p.y + 4).toFixed(1) + '" text-anchor="middle" font-size="' + pillFont + '" font-family="var(--font-mono)" font-weight="700" fill="' + p.color + '">' + p.text + '</text>' +
+      '</g>';
     });
 
     el.cumulativeChartWrap.innerHTML = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Acumulado de lluvia por año">' +
-      grid + '<line x1="' + padL + '" y1="' + (padT + plotH) + '" x2="' + (W - padR) + '" y2="' + (padT + plotH) + '" stroke="var(--line)" stroke-width="1"></line>' +
-      lines + xLabels + '</svg>';
+      grid + resto +
+      '<line x1="' + padL + '" y1="' + (padT + plotH) + '" x2="' + (W - padR) + '" y2="' + (padT + plotH) + '" stroke="var(--line)" stroke-width="1"></line>' +
+      areas + hoyLine + lines + endDots + xLabels + hoyLabel + pills + '</svg>';
 
     el.cumulativeLegend.innerHTML = series.map(s =>
       '<span><i style="background:' + s.color + '"></i>' + s.year + ' · ' + fmtMm(s.total) + ' mm</span>'
     ).join('');
+  }
+
+  function renderCumulativeStats(series, curYear) {
+    const curSeries = series.find(s => Number(s.year) === curYear);
+    if (!curSeries) {
+      el.cumulativeStats.innerHTML = '';
+      el.cumulativeNote.innerHTML = '';
+      return;
+    }
+    const prevYear = curYear - 1;
+    const today = todayStr();
+    const todayD = parseLocal(today);
+    const cutoff = today.slice(5);
+    const curTotal = curSeries.total;
+    const hasPrev = entries.some(e => e.date.startsWith(String(prevYear) + '-'));
+    const prevTotal = entries
+      .filter(e => e.date.startsWith(String(prevYear) + '-') && e.date.slice(5) <= cutoff)
+      .reduce((s, e) => s + e.mm, 0);
+    const dateLabel = 'Acumulado al ' + todayD.getDate() + ' de ' + MONTHS_LONG[todayD.getMonth()].toLowerCase();
+    const dropIcon = '<svg viewBox="0 0 24 24" class="stat-icon"><path fill="currentColor" d="M12 2c-3.5 5-6 8.7-6 11.5A6 6 0 0 0 18 13.5C18 10.7 15.5 7 12 2z"/></svg>';
+
+    let diffValueHtml, diffSub;
+    if (hasPrev) {
+      const diff = curTotal - prevTotal;
+      const up = diff >= 0;
+      const pct = prevTotal > 0 ? Math.round((diff / prevTotal) * 100) : null;
+      diffValueHtml = '<span class="' + (up ? 'up' : 'down') + '">' + (up ? '↑ +' : '↓ −') + fmtMm(Math.abs(diff)) + ' <span class="unit">mm</span></span>';
+      diffSub = (pct !== null ? (up ? '+' : '') + pct + '% · ' : '') + 'al ' + todayD.getDate() + '/' + (todayD.getMonth() + 1);
+    } else {
+      diffValueHtml = '— <span class="unit">mm</span>';
+      diffSub = 'Sin datos de ' + prevYear;
+    }
+
+    el.cumulativeStats.innerHTML =
+      '<div class="stat cum-stat">' +
+        '<div class="stat-icon-row">' + dropIcon + '<span class="label">Año ' + curYear + '</span></div>' +
+        '<div class="value">' + fmtMm(curTotal) + ' <span class="unit">mm</span></div>' +
+        '<div class="sub">' + dateLabel + '</div>' +
+      '</div>' +
+      '<div class="stat cum-stat">' +
+        '<div class="stat-icon-row">' + dropIcon + '<span class="label">A igual fecha ' + prevYear + '</span></div>' +
+        '<div class="value">' + (hasPrev ? fmtMm(prevTotal) + ' <span class="unit">mm</span>' : '— <span class="unit">mm</span>') + '</div>' +
+        '<div class="sub">' + (hasPrev ? dateLabel : 'Sin datos de ' + prevYear) + '</div>' +
+      '</div>' +
+      '<div class="stat cum-stat">' +
+        '<div class="stat-icon-row">' + dropIcon + '<span class="label">Diferencia vs ' + prevYear + '</span></div>' +
+        '<div class="value diff-value">' + diffValueHtml + '</div>' +
+        '<div class="sub">' + diffSub + '</div>' +
+      '</div>';
+
+    el.cumulativeNote.innerHTML =
+      '<svg viewBox="0 0 24 24" class="mini-icon"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="12" y1="11" x2="12" y2="16.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1" fill="currentColor"/></svg>' +
+      '<span>Los valores corresponden al acumulado diario de precipitaciones. Datos actualizados al ' + formatShort(today) + '.</span>';
   }
 
   function renderStats() {
@@ -1277,6 +1385,7 @@
     clearTimeout(damHistoryResizeTimer);
     damHistoryResizeTimer = setTimeout(() => {
       if (!el.damsTabHistory.hidden) renderDamHistoryChart();
+      if (!el.historyTabCumulative.hidden) renderCumulativeChart();
     }, 200);
   });
 
