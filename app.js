@@ -371,12 +371,14 @@
       }
     }
 
-    const cum = {};
-    years.forEach(y => { cum[y] = 0; });
     const todayKey = todayStr().slice(5);
+    const totalByYear = {};
+    computeYearlyStats().forEach(s => { totalByYear[s.year] = s.total; });
 
     const headHtml = '<th class="grid-date-col">Fecha</th>' + years.map(y =>
-      '<th class="num grid-year-col">' + y + '</th><th class="num grid-acu-col">Acu. ' + y + '</th>'
+      '<th class="num grid-year-col"><span class="grid-year-label">' + y + '</span><span class="grid-year-total">' +
+      '<svg viewBox="0 0 24 24" class="mini-icon"><path d="M12 2c-3.5 5-6 8.7-6 11.5A6 6 0 0 0 18 13.5C18 10.7 15.5 7 12 2z"/></svg>' +
+      fmtMm(totalByYear[y] || 0) + ' mm</span></th>'
     ).join('');
 
     let bodyHtml = '';
@@ -385,14 +387,12 @@
       years.forEach(y => {
         const entry = byYear[y][row.key];
         const mm = entry ? entry.mm : null;
-        if (mm !== null) cum[y] += mm;
         let tier = 0;
         if (mm !== null) { if (mm >= 30) tier = 3; else if (mm >= 10) tier = 2; else if (mm > 0) tier = 1; }
         const titleParts = mm !== null ? [row.label + '/' + y + ': ' + fmtMm(mm) + ' mm'] : [];
         if (entry && entry.note) titleParts.push(entry.note);
         const title = titleParts.length ? ' title="' + escapeHtml(titleParts.join(' — ')) + '"' : '';
-        cells += '<td class="num grid-year-col tier-' + tier + '"' + title + '>' + (mm !== null ? fmtMm(mm) : '') + '</td>';
-        cells += '<td class="num grid-acu-col">' + fmtMm(cum[y]) + '</td>';
+        cells += '<td class="num grid-year-col tier-' + tier + '"' + title + '>' + (mm !== null ? fmtMm(mm) : '-') + '</td>';
       });
       const rowId = row.key === todayKey ? ' id="grid-today-row"' : '';
       bodyHtml += '<tr' + rowId + '><td class="grid-date-col">' + row.label + '</td>' + cells + '</tr>';

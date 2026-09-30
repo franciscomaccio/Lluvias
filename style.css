@@ -520,11 +520,32 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
   text-transform: uppercase;
   color: var(--ink-soft);
   font-weight: 600;
-  padding: 6px 8px;
+  padding: 8px;
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
 .grid-table thead th.grid-date-col { text-align: left; position: sticky; left: 0; z-index: 2; }
+.grid-table thead th.grid-year-col { white-space: normal; }
+.grid-year-label {
+  display: block;
+  font-size: 0.92rem;
+  letter-spacing: normal;
+  text-transform: none;
+  font-weight: 700;
+  color: var(--ink);
+  font-family: var(--font-mono);
+}
+.grid-year-total {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  margin-top: 2px;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--accent-deep);
+}
+.grid-year-total .mini-icon { width: 10px; height: 10px; color: var(--accent); }
 .grid-table td {
   padding: 3px 8px;
   border-bottom: 1px solid var(--line);
@@ -540,7 +561,6 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
   left: 0;
   background: var(--surface);
 }
-.grid-table td.grid-acu-col { color: var(--ink-soft); }
 .grid-table td.grid-year-col.tier-1 { background: color-mix(in srgb, var(--accent) 32%, var(--surface-2)); }
 .grid-table td.grid-year-col.tier-2 { background: color-mix(in srgb, var(--accent) 62%, var(--surface-2)); color: #fff; }
 .grid-table td.grid-year-col.tier-3 { background: var(--accent-deep); color: #fff; }
