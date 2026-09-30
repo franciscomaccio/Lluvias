@@ -355,7 +355,7 @@
 
   function renderHistoryGrid() {
     if (!loaded) { el.gridYearWrap.innerHTML = '<div class="chart-empty">Cargando…</div>'; return; }
-    const years = Array.from(new Set(entries.map(e => e.date.slice(0, 4)))).sort();
+    const years = Array.from(new Set(entries.map(e => e.date.slice(0, 4)))).sort((a, b) => b.localeCompare(a));
     if (years.length === 0) { el.gridYearWrap.innerHTML = '<div class="chart-empty">Sin datos todavía.</div>'; return; }
 
     const byYear = {};
