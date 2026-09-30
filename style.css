@@ -547,12 +547,12 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
 }
 .grid-year-total .mini-icon { width: 10px; height: 10px; color: var(--accent); }
 .grid-table td {
-  padding: 3px 8px;
-  border-bottom: 1px solid var(--line);
+  padding: 1px 8px;
   text-align: right;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  line-height: 1.6;
 }
 .grid-table td.grid-date-col {
   text-align: left;
@@ -564,8 +564,8 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
 .grid-table td.grid-year-col.tier-1 { background: color-mix(in srgb, var(--accent) 32%, var(--surface-2)); }
 .grid-table td.grid-year-col.tier-2 { background: color-mix(in srgb, var(--accent) 62%, var(--surface-2)); color: #fff; }
 .grid-table td.grid-year-col.tier-3 { background: var(--accent-deep); color: #fff; }
-.grid-table tr#grid-today-row > td { box-shadow: inset 0 0 0 2px var(--accent); }
-.grid-table tr#grid-today-row > td.grid-date-col { font-weight: 700; color: var(--accent-deep); }
+.grid-table tr#grid-today-row > td { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+.grid-table tr#grid-today-row > td.grid-date-col { font-weight: 700; color: var(--accent-deep); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
 
 .kebab-btn {
   background: none;
