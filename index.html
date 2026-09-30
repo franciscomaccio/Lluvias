@@ -70,6 +70,10 @@
         <svg viewBox="0 0 24 24" class="plus-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Registrar lluvia de hoy
       </button>
+      <button type="button" class="submit-btn primary-cta ghost-btn" id="open-official-btn">
+        <svg viewBox="0 0 24 24" class="plus-icon" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6.5 13a4.2 4.2 0 0 1-.3-8.38A5.3 5.3 0 0 1 16.3 3.8a4.2 4.2 0 0 1 .2 8.2H6.5z"/><line x1="8" y1="17" x2="7" y2="20"/><line x1="12" y1="17" x2="11" y2="20"/><line x1="16" y1="17" x2="15" y2="20"/></svg>
+        Ver lluvias oficiales de tu localidad
+      </button>
       <div class="visit-counter" id="visit-counter" title="Visitas a la página">
         <svg viewBox="0 0 24 24"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
         <span id="visit-counter-value">—</span>
@@ -78,6 +82,13 @@
   </section>
 
   <div id="banner" class="banner page-banner"></div>
+
+  <div class="official-bar" id="official-bar" hidden>
+    <svg viewBox="0 0 24 24" class="mini-icon"><path d="M6.5 13a4.2 4.2 0 0 1-.3-8.38A5.3 5.3 0 0 1 16.3 3.8a4.2 4.2 0 0 1 .2 8.2H6.5z"/></svg>
+    <span>Mostrando lluvias oficiales de <b id="official-place-name">—</b></span>
+    <button type="button" class="link-btn" id="official-change-btn">Cambiar localidad</button>
+    <button type="button" class="link-btn" id="official-exit-btn">Volver a mis registros</button>
+  </div>
 
   <section class="stats-grid">
     <div class="stat weather-stat">
@@ -352,6 +363,22 @@
       <div id="signup-success" class="banner banner-success">¡Listo! Te enviamos un email para confirmar tu cuenta. Una vez confirmada, iniciá sesión desde el avatar.</div>
       <button type="submit" class="submit-btn" id="signup-submit-btn">Crear cuenta</button>
     </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="official-modal-backdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="official-modal-title">
+    <div class="modal-head">
+      <h2 id="official-modal-title">Elegí una localidad</h2>
+      <button type="button" class="icon-btn modal-close" id="official-modal-close" aria-label="Cerrar">✕</button>
+    </div>
+    <p class="field-hint">Buscá una provincia o localidad de Argentina para ver sus lluvias oficiales.</p>
+    <button type="button" class="ghost-btn small-btn" id="official-use-geo-btn">📍 Usar mi ubicación actual</button>
+    <div class="field">
+      <label for="official-search-input">Localidad</label>
+      <input type="text" id="official-search-input" placeholder="Ej: Malagueño, Córdoba" autocomplete="off">
+    </div>
+    <div class="official-search-results" id="official-search-results"></div>
   </div>
 </div>
 

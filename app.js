@@ -153,6 +153,16 @@
     signupSubmitBtn: document.getElementById('signup-submit-btn'),
 
     openRegisterBtn: document.getElementById('open-register-btn'),
+    openOfficialBtn: document.getElementById('open-official-btn'),
+    officialBar: document.getElementById('official-bar'),
+    officialPlaceName: document.getElementById('official-place-name'),
+    officialChangeBtn: document.getElementById('official-change-btn'),
+    officialExitBtn: document.getElementById('official-exit-btn'),
+    officialModalBackdrop: document.getElementById('official-modal-backdrop'),
+    officialModalClose: document.getElementById('official-modal-close'),
+    officialSearchInput: document.getElementById('official-search-input'),
+    officialSearchResults: document.getElementById('official-search-results'),
+    officialUseGeoBtn: document.getElementById('official-use-geo-btn'),
     modalBackdrop: document.getElementById('modal-backdrop'),
     modalTitle: document.getElementById('modal-title'),
     modalClose: document.getElementById('modal-close'),
@@ -208,6 +218,14 @@
   let entries = [];
   let entriesByDate = {};
   let loaded = false;
+  let dataMode = 'own';
+  let ownEntries = [];
+  let ownEntriesByDate = {};
+  let ownLoaded = false;
+  let officialEntries = [];
+  let officialEntriesByDate = {};
+  let officialLoaded = false;
+  let officialLoc = null;
   let editingDate = null;
   let scrolledGridToToday = false;
   let chartYear = new Date().getFullYear();
@@ -234,12 +252,150 @@
 
   // ---------- Zonas / usuarios ----------
   function canWriteCurrentZone() {
-    return !!(currentSession && selectedUserId && currentSession.user.id === selectedUserId);
+    return dataMode === 'own' && !!(currentSession && selectedUserId && currentSession.user.id === selectedUserId);
   }
   function updateWriteAccess() {
     el.openRegisterBtn.style.display = canWriteCurrentZone() ? 'inline-flex' : 'none';
     renderHistory();
   }
+
+  // ---------- Lluvias oficiales (Open-Meteo historical) ----------
+  function currentZoneLabel() {
+    const p = profiles.find(pr => pr.id === selectedUserId);
+    return p ? p.location_label : 'tu localidad';
+  }
+  function applyActiveDataset() {
+    if (dataMode === 'official') {
+      entries = officialEntries;
+      entriesByDate = officialEntriesByDate;
+      loaded = officialLoaded;
+    } else {
+      entries = ownEntries;
+      entriesByDate = ownEntriesByDate;
+      loaded = ownLoaded;
+    }
+    updateWriteAccess();
+    render();
+  }
+  async function fetchOfficialEntries(lat, lon, label) {
+    officialLoaded = false;
+    officialLoc = { label, lat, lon };
+    el.officialPlaceName.textContent = label;
+    applyActiveDataset();
+    const endDate = todayStr();
+    const startDate = (new Date().getFullYear() - 4) + '-01-01';
+    try {
+      const url = 'https://archive-api.open-meteo.com/v1/archive?latitude=' + lat + '&longitude=' + lon +
+        '&start_date=' + startDate + '&end_date=' + endDate +
+        '&daily=precipitation_sum&timezone=America%2FArgentina%2FCordoba';
+      const res = await fetch(url);
+      const json = await res.json();
+      const times = (json.daily && json.daily.time) || [];
+      const vals = (json.daily && json.daily.precipitation_sum) || [];
+      const data = [];
+      for (let i = 0; i < times.length; i++) {
+        if (vals[i] === null || vals[i] === undefined || vals[i] <= 0) continue;
+        data.push({ date: times[i], mm: Math.round(vals[i] * 10) / 10, note: null, updated_at: null });
+      }
+      data.sort((a, b) => a.date < b.date ? 1 : -1);
+      officialEntries = data;
+      officialEntriesByDate = {};
+      officialEntries.forEach(e => { officialEntriesByDate[e.date] = e; });
+      officialLoaded = true;
+    } catch (e) {
+      officialLoaded = false;
+    }
+    if (dataMode === 'official') applyActiveDataset();
+  }
+  async function activateOfficialLocation(lat, lon, label) {
+    dataMode = 'official';
+    el.officialBar.hidden = false;
+    el.openOfficialBtn.style.display = 'none';
+    await fetchOfficialEntries(lat, lon, label);
+  }
+  el.openOfficialBtn.addEventListener('click', () => {
+    if (officialLoc) {
+      activateOfficialLocation(officialLoc.lat, officialLoc.lon, officialLoc.label);
+    } else {
+      activateOfficialLocation(WEATHER_LAT, WEATHER_LON, currentZoneLabel());
+    }
+  });
+  el.officialExitBtn.addEventListener('click', () => {
+    dataMode = 'own';
+    el.officialBar.hidden = true;
+    el.openOfficialBtn.style.display = 'inline-flex';
+    applyActiveDataset();
+  });
+  function openOfficialModal() {
+    el.officialModalBackdrop.hidden = false;
+    el.officialSearchInput.value = '';
+    el.officialSearchResults.innerHTML = '';
+    el.officialSearchInput.focus();
+  }
+  function closeOfficialModal() { el.officialModalBackdrop.hidden = true; }
+  el.officialChangeBtn.addEventListener('click', openOfficialModal);
+  el.officialModalClose.addEventListener('click', closeOfficialModal);
+  el.officialModalBackdrop.addEventListener('click', (ev) => { if (ev.target === el.officialModalBackdrop) closeOfficialModal(); });
+
+  let officialSearchTimer = null;
+  el.officialSearchInput.addEventListener('input', () => {
+    clearTimeout(officialSearchTimer);
+    const q = el.officialSearchInput.value.trim();
+    if (q.length < 3) { el.officialSearchResults.innerHTML = ''; return; }
+    officialSearchTimer = setTimeout(() => searchOfficialLocality(q), 350);
+  });
+  async function searchOfficialLocality(q) {
+    el.officialSearchResults.innerHTML = '<div class="chart-empty">Buscando…</div>';
+    try {
+      const res = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(q) + '&count=8&language=es&format=json');
+      const json = await res.json();
+      const results = (json.results || []).filter(r => r.country_code === 'AR');
+      if (results.length === 0) {
+        el.officialSearchResults.innerHTML = '<div class="chart-empty">Sin resultados en Argentina.</div>';
+        return;
+      }
+      el.officialSearchResults.innerHTML = results.map((r, i) =>
+        '<button type="button" class="official-result" data-idx="' + i + '">' +
+          '<b>' + escapeHtml(r.name) + '</b>' +
+          '<span>' + escapeHtml(r.admin1 || '') + '</span>' +
+        '</button>'
+      ).join('');
+      [...el.officialSearchResults.querySelectorAll('.official-result')].forEach((btn, i) => {
+        btn.addEventListener('click', () => {
+          const r = results[i];
+          closeOfficialModal();
+          activateOfficialLocation(r.latitude, r.longitude, r.name + ', ' + (r.admin1 || 'Argentina'));
+        });
+      });
+    } catch (e) {
+      el.officialSearchResults.innerHTML = '<div class="chart-empty">No se pudo buscar. Probá de nuevo.</div>';
+    }
+  }
+  el.officialUseGeoBtn.addEventListener('click', () => {
+    if (!navigator.geolocation) { alert('Tu navegador no soporta geolocalización.'); return; }
+    el.officialUseGeoBtn.disabled = true;
+    el.officialUseGeoBtn.textContent = 'Buscando ubicación…';
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      let label = 'tu ubicación';
+      try {
+        const res = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + lat + '&lon=' + lon + '&zoom=10&accept-language=es');
+        const j = await res.json();
+        const a = j.address || {};
+        const locality = a.city || a.town || a.village || a.municipality || a.county || '';
+        const province = a.state || '';
+        label = [locality, province].filter(Boolean).join(', ') || label;
+      } catch (e) { /* si falla el reverse geocoding, se usa la etiqueta genérica */ }
+      el.officialUseGeoBtn.disabled = false;
+      el.officialUseGeoBtn.textContent = '📍 Usar mi ubicación actual';
+      closeOfficialModal();
+      activateOfficialLocation(lat, lon, label);
+    }, () => {
+      el.officialUseGeoBtn.disabled = false;
+      el.officialUseGeoBtn.textContent = '📍 Usar mi ubicación actual';
+      alert('No se pudo obtener tu ubicación.');
+    });
+  });
   function populateZoneSelect() {
     const prev = selectedUserId;
     el.zoneSelect.innerHTML = profiles.map(p =>
@@ -884,7 +1040,7 @@
     if (!el.popover.hidden && !ev.target.closest('.avatar-wrap')) closePopover();
   });
   document.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Escape') { closePopover(); closeModal(); }
+    if (ev.key === 'Escape') { closePopover(); closeModal(); closeOfficialModal(); }
   });
 
   el.loginForm.addEventListener('submit', async (ev) => {
@@ -1128,11 +1284,11 @@
       return;
     }
     el.banner.classList.remove('show');
-    entries = data;
-    entriesByDate = {};
-    entries.forEach(e => { entriesByDate[e.date] = e; });
-    loaded = true;
-    render();
+    ownEntries = data;
+    ownEntriesByDate = {};
+    ownEntries.forEach(e => { ownEntriesByDate[e.date] = e; });
+    ownLoaded = true;
+    applyActiveDataset();
   }
 
   client

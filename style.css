@@ -871,6 +871,50 @@ form input:read-only { color: var(--ink-soft); }
 }
 .modal-close:hover { background: var(--surface-2); color: var(--ink); }
 
+/* Lluvias oficiales */
+.official-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  border: 1px solid var(--accent-2);
+  color: var(--accent-deep);
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 0.86rem;
+  margin-bottom: 22px;
+}
+.official-bar[hidden] { display: none; }
+.official-bar .mini-icon { color: var(--accent); }
+.official-bar b { font-weight: 700; }
+.official-bar .link-btn { width: auto; margin: 0; padding: 0; }
+.official-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  margin-top: 6px;
+}
+.official-result {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 9px 12px;
+  color: var(--ink);
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-align: left;
+}
+.official-result:hover { background: var(--line); }
+.official-result span { color: var(--ink-soft); font-size: 0.78rem; white-space: nowrap; }
+
 footer.note {
   margin-top: 28px;
   text-align: center;
