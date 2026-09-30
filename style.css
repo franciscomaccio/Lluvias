@@ -21,7 +21,9 @@
 * { box-sizing: border-box; }
 html, body {
   margin: 0;
-  background: var(--bg);
+  background:
+    linear-gradient(rgba(238, 243, 246, 0.78), rgba(238, 243, 246, 0.78)),
+    url('bg-rain.png') center/cover fixed;
   color: var(--ink);
   font-family: var(--font-body);
   line-height: 1.5;
