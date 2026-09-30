@@ -547,7 +547,7 @@
       const pillW = 26 + p.text.length * (isMobile ? 9.2 : 6.7);
       const pillX = Math.min(p.x + 7, W - pillW - 2);
       pills += '<g>' +
-        '<rect x="' + pillX.toFixed(1) + '" y="' + (p.y - pillH / 2).toFixed(1) + '" width="' + pillW.toFixed(1) + '" height="' + pillH + '" rx="' + (pillH / 2) + '" fill="var(--surface)" stroke="' + p.color + '" stroke-width="1.3"></rect>' +
+        '<rect x="' + pillX.toFixed(1) + '" y="' + (p.y - pillH / 2).toFixed(1) + '" width="' + pillW.toFixed(1) + '" height="' + pillH + '" rx="' + (pillH / 2) + '" fill="var(--surface)" fill-opacity="0.82" stroke="' + p.color + '" stroke-width="1.3"></rect>' +
         '<text x="' + (pillX + pillW / 2).toFixed(1) + '" y="' + (p.y + 4).toFixed(1) + '" text-anchor="middle" font-size="' + pillFont + '" font-family="var(--font-mono)" font-weight="700" fill="' + p.color + '">' + p.text + '</text>' +
       '</g>';
     });
