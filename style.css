@@ -889,6 +889,28 @@ form input:read-only { color: var(--ink-soft); }
 .official-bar .mini-icon { color: var(--accent); }
 .official-bar b { font-weight: 700; }
 .official-bar .link-btn { width: auto; margin: 0; padding: 0; }
+.official-modal { max-width: 480px; }
+.official-map {
+  height: 320px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  margin: 4px 0 10px;
+  overflow: hidden;
+}
+.official-map .leaflet-container { font-family: var(--font-body); }
+.official-map .leaflet-popup-content { font-size: 0.85rem; }
+.official-map-popup-btn {
+  display: inline-block;
+  margin-top: 4px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
 .official-search-results {
   display: flex;
   flex-direction: column;

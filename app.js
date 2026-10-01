@@ -160,6 +160,7 @@
     officialExitBtn: document.getElementById('official-exit-btn'),
     officialModalBackdrop: document.getElementById('official-modal-backdrop'),
     officialModalClose: document.getElementById('official-modal-close'),
+    officialMapEl: document.getElementById('official-map'),
     officialSearchInput: document.getElementById('official-search-input'),
     officialSearchResults: document.getElementById('official-search-results'),
     officialUseGeoBtn: document.getElementById('official-use-geo-btn'),
@@ -326,10 +327,60 @@
     el.openOfficialBtn.style.display = 'inline-flex';
     applyActiveDataset();
   });
+  let officialMap = null;
+  let officialPickMarker = null;
+  let officialResultMarkers = null;
+  function initOfficialMap() {
+    if (officialMap) return;
+    officialMap = L.map(el.officialMapEl).setView([-38.4, -63.6], 4);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap',
+      maxZoom: 18,
+    }).addTo(officialMap);
+    officialResultMarkers = L.layerGroup().addTo(officialMap);
+    officialMap.on('click', (ev) => pickOfficialMapPoint(ev.latlng.lat, ev.latlng.lng));
+  }
+  function pickOfficialMapPoint(lat, lon) {
+    if (!officialPickMarker) {
+      officialPickMarker = L.marker([lat, lon]).addTo(officialMap);
+    } else {
+      officialPickMarker.setLatLng([lat, lon]);
+    }
+    officialPickMarker.bindPopup('Buscando el nombre…').openPopup();
+    reverseGeocodeForOfficial(lat, lon);
+  }
+  async function reverseGeocodeForOfficial(lat, lon) {
+    let label = 'Ubicación seleccionada';
+    try {
+      const res = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + lat + '&lon=' + lon + '&zoom=10&accept-language=es');
+      const j = await res.json();
+      const a = j.address || {};
+      const locality = a.city || a.town || a.village || a.municipality || a.county || '';
+      const province = a.state || '';
+      label = [locality, province].filter(Boolean).join(', ') || label;
+    } catch (e) { /* si falla el reverse geocoding, se usa la etiqueta genérica */ }
+    if (!officialPickMarker) return;
+    officialPickMarker.setPopupContent(
+      '<b>' + escapeHtml(label) + '</b><br>' +
+      '<button type="button" class="official-map-popup-btn" data-pick-confirm="1">Usar esta ubicación</button>'
+    );
+    officialPickMarker.openPopup();
+    setTimeout(() => {
+      const btn = document.querySelector('.leaflet-popup-content [data-pick-confirm]');
+      if (btn) btn.onclick = () => { closeOfficialModal(); activateOfficialLocation(lat, lon, label); };
+    }, 0);
+  }
   function openOfficialModal() {
     el.officialModalBackdrop.hidden = false;
     el.officialSearchInput.value = '';
     el.officialSearchResults.innerHTML = '';
+    initOfficialMap();
+    officialResultMarkers.clearLayers();
+    if (officialPickMarker) { officialMap.removeLayer(officialPickMarker); officialPickMarker = null; }
+    const center = officialLoc ? [officialLoc.lat, officialLoc.lon] : [WEATHER_LAT, WEATHER_LON];
+    officialMap.setView(center, officialLoc ? 11 : 6);
+    if (officialLoc) officialPickMarker = L.marker(center).addTo(officialMap);
+    setTimeout(() => officialMap.invalidateSize(), 50);
     el.officialSearchInput.focus();
   }
   function closeOfficialModal() { el.officialModalBackdrop.hidden = true; }
@@ -346,6 +397,7 @@
   });
   async function searchOfficialLocality(q) {
     el.officialSearchResults.innerHTML = '<div class="chart-empty">Buscando…</div>';
+    if (officialResultMarkers) officialResultMarkers.clearLayers();
     try {
       const res = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(q) + '&count=8&language=es&format=json');
       const json = await res.json();
@@ -354,6 +406,10 @@
         el.officialSearchResults.innerHTML = '<div class="chart-empty">Sin resultados en Argentina.</div>';
         return;
       }
+      const selectResult = (r) => {
+        closeOfficialModal();
+        activateOfficialLocation(r.latitude, r.longitude, r.name + ', ' + (r.admin1 || 'Argentina'));
+      };
       el.officialSearchResults.innerHTML = results.map((r, i) =>
         '<button type="button" class="official-result" data-idx="' + i + '">' +
           '<b>' + escapeHtml(r.name) + '</b>' +
@@ -361,12 +417,27 @@
         '</button>'
       ).join('');
       [...el.officialSearchResults.querySelectorAll('.official-result')].forEach((btn, i) => {
-        btn.addEventListener('click', () => {
-          const r = results[i];
-          closeOfficialModal();
-          activateOfficialLocation(r.latitude, r.longitude, r.name + ', ' + (r.admin1 || 'Argentina'));
-        });
+        btn.addEventListener('click', () => selectResult(results[i]));
       });
+      if (officialMap) {
+        const bounds = [];
+        results.forEach((r, i) => {
+          const marker = L.circleMarker([r.latitude, r.longitude], {
+            radius: 8, color: '#2f6f9e', weight: 2, fillColor: '#2f6f9e', fillOpacity: 0.5,
+          }).addTo(officialResultMarkers);
+          marker.bindPopup(
+            '<b>' + escapeHtml(r.name) + '</b><br>' + escapeHtml(r.admin1 || '') +
+            '<br><button type="button" class="official-map-popup-btn" data-result-idx="' + i + '">Usar esta localidad</button>'
+          );
+          marker.on('popupopen', () => {
+            const btn = document.querySelector('.leaflet-popup-content [data-result-idx="' + i + '"]');
+            if (btn) btn.onclick = () => selectResult(results[i]);
+          });
+          bounds.push([r.latitude, r.longitude]);
+        });
+        if (bounds.length === 1) officialMap.setView(bounds[0], 10);
+        else officialMap.fitBounds(bounds, { padding: [30, 30] });
+      }
     } catch (e) {
       el.officialSearchResults.innerHTML = '<div class="chart-empty">No se pudo buscar. Probá de nuevo.</div>';
     }
