@@ -890,6 +890,54 @@ form input:read-only { color: var(--ink-soft); }
 .official-bar b { font-weight: 700; }
 .official-bar .link-btn { width: auto; margin: 0; padding: 0; }
 .official-modal { max-width: 480px; }
+.official-geo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: auto;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent-deep);
+  border: 1px solid var(--accent-2);
+  border-radius: 999px;
+  padding: 8px 16px 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  margin-bottom: 14px;
+}
+.official-geo-btn:hover { background: color-mix(in srgb, var(--accent) 22%, var(--surface)); }
+.official-geo-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.official-geo-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+.official-search-field {
+  position: relative;
+  margin-bottom: 10px;
+}
+.official-search-field svg {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+.official-search-field input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 11px 14px 11px 38px;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+.official-search-field input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  background: var(--surface);
+}
 .official-map {
   height: 320px;
   border-radius: 10px;

@@ -164,6 +164,7 @@
     officialSearchInput: document.getElementById('official-search-input'),
     officialSearchResults: document.getElementById('official-search-results'),
     officialUseGeoBtn: document.getElementById('official-use-geo-btn'),
+    officialUseGeoLabel: document.getElementById('official-use-geo-label'),
     modalBackdrop: document.getElementById('modal-backdrop'),
     modalTitle: document.getElementById('modal-title'),
     modalClose: document.getElementById('modal-close'),
@@ -445,7 +446,7 @@
   el.officialUseGeoBtn.addEventListener('click', () => {
     if (!navigator.geolocation) { alert('Tu navegador no soporta geolocalización.'); return; }
     el.officialUseGeoBtn.disabled = true;
-    el.officialUseGeoBtn.textContent = 'Buscando ubicación…';
+    el.officialUseGeoLabel.textContent = 'Buscando ubicación…';
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const lat = pos.coords.latitude, lon = pos.coords.longitude;
       let label = 'tu ubicación';
@@ -458,12 +459,12 @@
         label = [locality, province].filter(Boolean).join(', ') || label;
       } catch (e) { /* si falla el reverse geocoding, se usa la etiqueta genérica */ }
       el.officialUseGeoBtn.disabled = false;
-      el.officialUseGeoBtn.textContent = '📍 Usar mi ubicación actual';
+      el.officialUseGeoLabel.textContent = 'Usar mi ubicación actual';
       closeOfficialModal();
       activateOfficialLocation(lat, lon, label);
     }, () => {
       el.officialUseGeoBtn.disabled = false;
-      el.officialUseGeoBtn.textContent = '📍 Usar mi ubicación actual';
+      el.officialUseGeoLabel.textContent = 'Usar mi ubicación actual';
       alert('No se pudo obtener tu ubicación.');
     });
   });

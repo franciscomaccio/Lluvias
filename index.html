@@ -373,10 +373,13 @@
       <button type="button" class="icon-btn modal-close" id="official-modal-close" aria-label="Cerrar">✕</button>
     </div>
     <p class="field-hint">Buscá una localidad o hacé clic directamente en el mapa.</p>
-    <button type="button" class="ghost-btn small-btn" id="official-use-geo-btn">📍 Usar mi ubicación actual</button>
-    <div class="field">
-      <label for="official-search-input">Localidad</label>
-      <input type="text" id="official-search-input" placeholder="Ej: Malagueño, Córdoba" autocomplete="off">
+    <button type="button" class="official-geo-btn" id="official-use-geo-btn">
+      <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="9" r="2.4" fill="currentColor"/></svg>
+      <span id="official-use-geo-label">Usar mi ubicación actual</span>
+    </button>
+    <div class="official-search-field">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="16.3" y1="16.3" x2="21" y2="21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input type="text" id="official-search-input" placeholder="Buscá una localidad (ej: Malagueño, Córdoba)" autocomplete="off" aria-label="Localidad">
     </div>
     <div id="official-map" class="official-map"></div>
     <div class="official-search-results" id="official-search-results"></div>
