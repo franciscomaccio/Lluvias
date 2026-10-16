@@ -567,6 +567,9 @@ svg.chart { width: 100%; height: auto; overflow: visible; }
 .grid-table td.grid-year-col.tier-2 { background: color-mix(in srgb, var(--accent) 62%, var(--surface-2)); color: #fff; }
 .grid-table td.grid-year-col.tier-3 { background: var(--accent-deep); color: #fff; }
 .grid-table tr#grid-today-row > td { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+.grid-table tr#grid-today-row > td.tier-1,
+.grid-table tr#grid-today-row > td.tier-2,
+.grid-table tr#grid-today-row > td.tier-3 { color: var(--accent-deep); font-weight: 700; }
 .grid-table tr#grid-today-row > td.grid-date-col { font-weight: 700; color: var(--accent-deep); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
 
 .kebab-btn {
@@ -786,6 +789,19 @@ form input, form textarea {
   color: var(--ink);
 }
 form input[type="number"] { font-family: var(--font-mono); }
+form select.note-preset {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 9px 11px;
+  margin-bottom: 8px;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+form select.note-preset:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 form input:focus, form textarea:focus, button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;

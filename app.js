@@ -172,6 +172,7 @@
     fDate: document.getElementById('f-date'),
     fMm: document.getElementById('f-mm'),
     fNote: document.getElementById('f-note'),
+    fNotePreset: document.getElementById('f-note-preset'),
     submitBtn: document.getElementById('submit-btn'),
 
     recentChartWrap: document.getElementById('recent-chart-wrap'),
@@ -1204,6 +1205,14 @@
     el.modalBackdrop.hidden = true;
     editingDate = null;
   }
+  el.fNotePreset.addEventListener('change', () => {
+    const preset = el.fNotePreset.value;
+    if (!preset) return;
+    const current = el.fNote.value.trim();
+    el.fNote.value = (current ? current + ', ' + preset : preset).slice(0, el.fNote.maxLength);
+    el.fNotePreset.value = '';
+    el.fNote.focus();
+  });
   el.openRegisterBtn.addEventListener('click', (ev) => { ev.stopPropagation(); openEntryModal(null); });
   el.modalClose.addEventListener('click', closeModal);
   el.modalBackdrop.addEventListener('click', (ev) => { if (ev.target === el.modalBackdrop) closeModal(); });
